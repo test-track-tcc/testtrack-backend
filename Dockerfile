@@ -3,7 +3,6 @@ FROM node:22.12.0-alpine AS build
 WORKDIR /app 
 
 COPY package*.json ./
-COPY .env  ./
 
 RUN npm ci
 

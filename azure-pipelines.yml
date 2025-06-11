@@ -143,6 +143,8 @@ stages:
         command: 'buildAndPush'
         Dockerfile: 'Dockerfile' 
         tags: |
+          $(Build.BuildId)
+          $(setImageTag.imageTag)
           latest
 
 - stage: Deploy
