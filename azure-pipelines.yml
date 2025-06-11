@@ -61,3 +61,39 @@ stages:
               npm test
             displayName: 'Rodar Testes Automatizados'
 
+  - stage: Deploy
+    displayName: 'Deploy para Produção'
+    dependsOn: Test
+    condition: succeeded() 
+    jobs:
+      - job: DeployJob
+        displayName: 'Publicar no Azure App Service'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '22.x'
+            displayName: 'Instalar Node.js'
+
+          - script: |
+              npm install
+              npm run build
+            displayName: 'Build para Deploy'
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+              
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'testtrack-connection'
+              appName: 'meu-app-service'
+              package: '$(Build.ArtifactStagingDirectory)/app.zip'
+              appSettings: |
+                DB_HOST=$(DB_HOST)
+                DB_PORT=$(DB_PORT)
+                DB_USERNAME=$(DB_USERNAME)
+                DB_PASSWORD=$(DB_PASSWORD)
+                DB_DATABASE=$(DB_DATABASE)
