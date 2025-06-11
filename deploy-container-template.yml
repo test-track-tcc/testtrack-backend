@@ -1,0 +1,35 @@
+parameters:
+  webAppName: 'testtrack'              
+  resourceGroup: 'testtrack'           
+  azureServiceConnection: 'testtrack-connection'  
+  dbServerName: 'testtrackdev.mysql.database.azure.com'            
+  dbName: 'testtrackdev'                  
+  dbAdminUser: 'nestappadmin'            
+  dbAdminPassword: 'PUC@1234'         
+  imageNameWithTag: 'diogobonet/testtrack-backend:latest'        
+
+steps:
+- task: AzureWebAppContainer@1
+  displayName: 'Deploy Contêiner Docker no Azure App Service'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    appName: ${{ parameters.webAppName }}
+    resourceGroupName: ${{ parameters.resourceGroup }}
+    imageName: ${{ parameters.imageNameWithTag }} 
+
+- task: AzureAppServiceSettings@1
+  displayName: 'Configurar Variáveis de Ambiente do App Service'
+  inputs:
+    azureSubscription: ${{ parameters.azureServiceConnection }}
+    appName: ${{ parameters.webAppName }}
+    resourceGroupName: ${{ parameters.resourceGroup }}
+    appSettings: |
+      [
+        { "name": "DB_HOST", "value": "${{ parameters.dbServerName }}" },
+        { "name": "DB_PORT", "value": "3306" },
+        { "name": "DB_USERNAME", "value": "${{ parameters.dbAdminUser }}" },
+        { "name": "DB_PASSWORD", "value": "${{ parameters.dbAdminPassword }}" },
+        { "name": "DB_DATABASE", "value": "${{ parameters.dbName }}" },
+        { "name": "NODE_ENV", "value": "production" }, # Configurado para 'production' para o ambiente compartilhado
+        { "name": "WEBSITES_PORT", "value": "3000" } # Crucial para contêineres Docker
+      ]
