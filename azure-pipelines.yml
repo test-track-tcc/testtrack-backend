@@ -112,6 +112,7 @@ variables:
   dbName: 'testtrackdev'
   dbAdminUser: 'nestappadmin'
   dbAdminPassword: 'PUC@1234'
+  - group: 'SharedSecrets'
 
 stages:
 - stage: BuildAndPushImage

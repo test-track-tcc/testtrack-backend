@@ -23,13 +23,12 @@ steps:
     azureSubscription: ${{ parameters.azureServiceConnection }}
     appName: ${{ parameters.webAppName }}
     resourceGroupName: ${{ parameters.resourceGroup }}
-    appSettings: |
-      [
-        { "name": "DB_HOST", "value": "${{ parameters.dbServerName }}" },
-        { "name": "DB_PORT", "value": "3306" },
-        { "name": "DB_USERNAME", "value": "${{ parameters.dbAdminUser }}" },
-        { "name": "DB_PASSWORD", "value": "${{ parameters.dbAdminPassword }}" },
-        { "name": "DB_DATABASE", "value": "${{ parameters.dbName }}" },
-        { "name": "NODE_ENV", "value": "production" }, # Configurado para 'production' para o ambiente compartilhado
-        { "name": "WEBSITES_PORT", "value": "3000" } # Crucial para contêineres Docker
-      ]
+    appSettings: >
+      [{"name":"DB_HOST","value":"${{ parameters.dbServerName }}"},
+      {"name":"DB_PORT","value":"3306"},
+      {"name":"DB_USERNAME","value":"${{ parameters.dbAdminUser }}"},
+      {"name":"DB_PASSWORD","value":"${{ parameters.dbAdminPassword }}"},
+      {"name":"DB_DATABASE","value":"${{ parameters.dbName }}"},
+      {"name":"NODE_ENV","value":"production"},
+      {"name":"WEBSITES_PORT","value":"3000"}]
+
