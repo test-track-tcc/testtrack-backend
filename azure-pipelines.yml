@@ -113,9 +113,6 @@ variables:
   dbAdminUser: 'nestappadmin'
   dbAdminPassword: 'PUC@1234'
 
-variables:
-  - group: 'SharedSecrets'
-
 stages:
 - stage: BuildAndPushImage
   displayName: 'Build & Push Docker Image'
