@@ -143,6 +143,7 @@ stages:
         command: 'buildAndPush'
         Dockerfile: 'Dockerfile' 
         tags: |
+          ${Build.BuildId}
           latest
 
 - stage: Deploy
@@ -171,4 +172,4 @@ stages:
               dbName: $(dbName)
               dbAdminUser: $(dbAdminUser)
               dbAdminPassword: $(dbAdminPassword)
-              imageNameWithTag: '$(imageName):$(imageTagForDeploy)'
+              imageNameWithTag: 'latest'
