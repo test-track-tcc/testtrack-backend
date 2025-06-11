@@ -1,21 +1,88 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
-- main
+  branches:
+    include:
+      - main        
+      - develop     
+      - release/* 
+
+pr:
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest' 
 
-steps:
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+variables:
+  azureServiceConnection: 'testtrack-connection' 
+  dockerRegistryServiceConnection: 'testtrack-docker'
+  dockerHubUsername: 'diogobonet' 
+  dockerRepoName: 'testtrack-backend' 
+  imageName: '$(dockerHubUsername)/$(dockerRepoName)' 
+  webAppName: 'testtrack'         
+  resourceGroup: 'testtrack'   
+  dbServerName: 'testtrackdev.mysql.database.azure.com' 
+  dbName: 'testtrackdev'
+  dbAdminUser: 'nestappadmin'
+  dbAdminPassword: 'PUC@1234'
 
-- script: |
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+stages:
+- stage: BuildAndPushImage
+  displayName: 'Build & Push Docker Image'
+  jobs:
+  - job: BuildDockerImage
+    displayName: 'Construir e Enviar Imagem Docker'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    - script: |
+        branch_name=$(Build.SourceBranchName)
+        if [[ "$branch_name" == "main" || "$branch_name" == "develop" ]]; then
+          echo "##vso[task.setvariable variable=imageTag]$branch_name"
+        elif [[ "$branch_name" == "release"* ]]; then
+          echo "##vso[task.setvariable variable=imageTag]$(echo $branch_name | sed 's/\//-/g')"
+        else
+          echo "##vso[task.setvariable variable=imageTag]latest" # Fallback para outras branches
+        fi
+      displayName: 'Definir Tag da Imagem Docker'
+      name: setImageTag 
+
+    - task: Docker@2
+      displayName: 'Construir e Enviar Imagem Docker para DockerHub'
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: 'Dockerfile' 
+        tags: |
+          latest
+
+- stage: Deploy
+  displayName: 'Deploy para Ambiente Compartilhado'
+  dependsOn: BuildAndPushImage 
+  condition: succeeded('BuildAndPushImage')
+  variables:
+    imageTagForDeploy: $[ stageDependencies.BuildAndPushImage.BuildDockerImage.outputs['setImageTag.imageTag'] ]
+
+  jobs:
+  - deployment: DeploySharedEnv
+    displayName: 'Deploy para o Ambiente Compartilhado'
+    environment: 'Shared-Environment' 
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: deploy-container-template.yml
+            parameters:
+              webAppName: $(webAppName)
+              resourceGroup: $(resourceGroup)
+              azureServiceConnection: $(azureServiceConnection)
+              dbServerName: $(dbServerName)
+              dbName: $(dbName)
+              dbAdminUser: $(dbAdminUser)
+              dbAdminPassword: $(dbAdminPassword)
+              imageNameWithTag: '$(imageName):$(imageTagForDeploy)'
+
