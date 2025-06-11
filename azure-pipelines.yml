@@ -155,6 +155,7 @@ stages:
   jobs:
   - deployment: DeploySharedEnv
     displayName: 'Deploy para o Ambiente Compartilhado'
+    environment: 'Shared-Environment' 
     pool:
       vmImage: 'ubuntu-latest'
     strategy:
