@@ -142,9 +142,7 @@ stages:
         repository: '$(imageName)'
         command: 'buildAndPush'
         Dockerfile: 'Dockerfile' 
-        tags: |
-          ${Build.BuildId}
-          latest
+        tags: 'latest'
 
 - stage: Deploy
   displayName: 'Deploy para Ambiente Compartilhado'
@@ -172,4 +170,4 @@ stages:
               dbName: $(dbName)
               dbAdminUser: $(dbAdminUser)
               dbAdminPassword: $(dbAdminPassword)
-              imageNameWithTag: 'latest'
+              imageNameWithTag: '$(imageName):latest'
