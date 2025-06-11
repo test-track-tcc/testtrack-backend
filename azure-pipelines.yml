@@ -90,7 +90,7 @@ trigger:
     include:
       - main        
       - develop     
-      - release/* 
+      - release
 
 pr:
   branches:
