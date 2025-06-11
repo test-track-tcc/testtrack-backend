@@ -45,7 +45,7 @@ stages:
         - task: PublishBuildArtifacts@1
           displayName: 'Publicar Artefatos de Build'
           inputs:
-            pathToPublish: '$(System.DefaultWorkingDirectory)/build'
+            pathToPublish: '$(System.DefaultWorkingDirectory)'
             artifactName: 'drop'
             replaceExistingArchive: true
   
