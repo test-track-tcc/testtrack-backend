@@ -1,14 +1,9 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
   branches:
     include:
-      - main
-      - develop
-      - release
+      - main        
+      - develop     
+      - release/* 
 
 pr:
   branches:
@@ -16,70 +11,78 @@ pr:
       - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest' 
 
 variables:
-  DB_HOST: testtrackdev.mysql.database.azure.com
-  DB_PORT: 3306
-  DB_USERNAME: nestappadmin
-  DB_PASSWORD: PUC@1234
-  DB_DATABASE: testtrackdev
+  azureServiceConnection: 'testtrack-connection' 
+  dockerRegistryServiceConnection: 'testtrack-docker'
+  dockerHubUsername: 'diogobonet' 
+  dockerRepoName: 'testtrack-backend' 
+  imageName: '$(dockerHubUsername)/$(dockerRepoName)' 
+  webAppName: 'testtrack'         
+  resourceGroup: 'testtrack'   
+  dbServerName: 'testtrackdev.mysql.database.azure.com' 
+  dbName: 'testtrackdev'
+  dbAdminUser: 'nestappadmin'
+  dbAdminPassword: 'PUC@1234'
 
 stages:
-  - stage: Build
-    displayName: 'Estágio de Build'
-    jobs:
-    - job: BuildJob
-      displayName: 'Build Job'
-      steps:
-        - script: echo "Compilando o sistema..."
-          displayName: 'Compiling the system'
-        - task: NodeTool@0
-          inputs:
-            versionSpec: '22.x'
-          displayName: 'Install Node.js'
-        - script: |
-            npm install
-            npm run build
-  
-  - stage: Test
-    displayName: 'Executar Testes'
-    dependsOn: Build
-    jobs:
-      - job: TestJob
-        displayName: 'Job de Teste'
-        steps:
-          - script: |
-              echo "Executando testes..."
-              npm test
-            displayName: 'Rodar Testes Automatizados'
+- stage: BuildAndPushImage
+  displayName: 'Build & Push Docker Image'
+  jobs:
+  - job: BuildDockerImage
+    displayName: 'Construir e Enviar Imagem Docker'
+    pool:
+      vmImage: 'ubuntu-latest'
 
-  - stage: Deploy
-    displayName: 'Deploy para Produção'
-    dependsOn: Test
-    condition: succeeded() 
-    jobs:
-      - job: DeployJob
-        displayName: 'Publicar no Azure App Service'
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '22.x'
-            displayName: 'Instalar Node.js'
+    steps:
+    - script: |
+        branch_name=$(Build.SourceBranchName)
+        if [[ "$branch_name" == "main" || "$branch_name" == "develop" ]]; then
+          echo "##vso[task.setvariable variable=imageTag]$branch_name"
+        elif [[ "$branch_name" == "release"* ]]; then
+          echo "##vso[task.setvariable variable=imageTag]$(echo $branch_name | sed 's/\//-/g')"
+        else
+          echo "##vso[task.setvariable variable=imageTag]latest" # Fallback para outras branches
+        fi
+      displayName: 'Definir Tag da Imagem Docker'
+      name: setImageTag 
 
-          - script: |
-              npm install
-              npm run build
-            displayName: 'Build para Deploy'
+    - task: Docker@2
+      displayName: 'Construir e Enviar Imagem Docker para DockerHub'
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: 'Dockerfile' 
+        tags: |
+          latest
 
-          - task: AzureWebApp@1
-            inputs:
-              azureSubscription: 'testtrack-connection'
-              appName: 'meu-app-service'
-              package: '$(System.DefaultWorkingDirectory)'
-              appSettings: |
-                DB_HOST=$(DB_HOST)
-                DB_PORT=$(DB_PORT)
-                DB_USERNAME=$(DB_USERNAME)
-                DB_PASSWORD=$(DB_PASSWORD)
-                DB_DATABASE=$(DB_DATABASE)
+- stage: Deploy
+  displayName: 'Deploy para Ambiente Compartilhado'
+  dependsOn: BuildAndPushImage 
+  condition: succeeded('BuildAndPushImage')
+  variables:
+    imageTagForDeploy: $[ stageDependencies.BuildAndPushImage.BuildDockerImage.outputs['setImageTag.imageTag'] ]
+
+  jobs:
+  - deployment: DeploySharedEnv
+    displayName: 'Deploy para o Ambiente Compartilhado'
+    environment: 'Shared-Environment' 
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - template: deploy-container-template.yml
+            parameters:
+              webAppName: $(webAppName)
+              resourceGroup: $(resourceGroup)
+              azureServiceConnection: $(azureServiceConnection)
+              dbServerName: $(dbServerName)
+              dbName: $(dbName)
+              dbAdminUser: $(dbAdminUser)
+              dbAdminPassword: $(dbAdminPassword)
+              imageNameWithTag: '$(imageName):$(imageTagForDeploy)'
+
