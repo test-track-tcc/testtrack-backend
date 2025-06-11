@@ -3,6 +3,13 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
 
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - release
+
 pr:
   branches:
     include:
@@ -10,6 +17,13 @@ pr:
 
 pool:
   vmImage: ubuntu-latest
+
+variables:
+  DB_HOST: testtrackdev.mysql.database.azure.com
+  DB_PORT: 3306
+  DB_USERNAME: nestappadmin
+  DB_PASSWORD: PUC@1234
+  DB_DATABASE: testtrackdev
 
 stages:
   - stage: Build
@@ -22,8 +36,61 @@ stages:
           displayName: 'Compiling the system'
         - task: NodeTool@0
           inputs:
-            versionSpec: '20.x'
+            versionSpec: '22.x'
           displayName: 'Install Node.js'
         - script: |
             npm install
             npm run build
+        
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publicar Artefatos de Build'
+          inputs:
+            pathToPublish: '$(System.DefaultWorkingDirectory)/build'
+            artifactName: 'drop'
+            replaceExistingArchive: true
+  
+  - stage: Test
+    displayName: 'Executar Testes'
+    dependsOn: Build
+    jobs:
+      - job: TestJob
+        displayName: 'Job de Teste'
+        steps:
+          - script: |
+              echo "Executando testes..."
+              npm test
+            displayName: 'Rodar Testes Automatizados'
+
+  - stage: Deploy
+    displayName: 'Deploy para Produção'
+    dependsOn: Test
+    condition: succeeded() 
+    jobs:
+      - job: DeployJob
+        displayName: 'Publicar no Azure App Service'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '22.x'
+            displayName: 'Instalar Node.js'
+
+          - script: |
+              npm install
+              npm run build
+            displayName: 'Build para Deploy'
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+              replaceExistingArchive: true
+            displayName: 'Criar artefato ZIP para deploy'
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'AzureConnection'  # Nome da service connection
+              appName: 'meu-app-service'            # Nome do seu App Service
+              package: '$(Build.ArtifactStagingDirectory)/app.zip'
+            displayName: 'Deploy no Azure App Service'
