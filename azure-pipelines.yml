@@ -112,6 +112,8 @@ variables:
   dbName: 'testtrackdev'
   dbAdminUser: 'nestappadmin'
   dbAdminPassword: 'PUC@1234'
+
+variables:
   - group: 'SharedSecrets'
 
 stages:
