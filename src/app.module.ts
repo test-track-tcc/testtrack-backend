@@ -21,6 +21,9 @@ import { TestCasesModule } from './test-case/test-case.module';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+        ssl: {
+          rejectUnauthorized: true,
+        },
       }),
       inject: [ConfigService],
     }),

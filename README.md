@@ -8,11 +8,11 @@
 
 ## 📄 Descrição do Sistema
 Breve descrição da API CRUD desenvolvida, incluindo:
-- Linguagem utilizada: Java/Kotlin/C#/Python/Javascript.
-- Banco de dados: MySQL/PostgreSQL/Outro.
-- Endpoints CRUD implementados.
+- Linguagem utilizada: TypeScript (framework: Nest.js)
+- Banco de dados: MySQL
+- Endpoints CRUD implementados: testCase, users
 - Testes: unitários e integrados.
-- Documentação Swagger: disponível em `/swagger`.
+- Documentação Swagger: disponível em `/docs`.
 
 ## 🔀 Estratégia de Branches
 - Branch principal: `main`
@@ -28,4 +28,4 @@ Breve descrição da API CRUD desenvolvida, incluindo:
 - Arquivo de configuração: `azure-pipelines.yml`
 - Stages implementados: build, test, deploy
 - Deploy realizado no: **Azure App Service**
-- Banco de dados: **DBaaS** - MySQL/PostgreSQL
+- Banco de dados: **DBaaS** - MySQL
