@@ -41,13 +41,6 @@ stages:
         - script: |
             npm install
             npm run build
-        
-        - task: PublishBuildArtifacts@1
-          displayName: 'Publicar Artefatos de Build'
-          inputs:
-            pathToPublish: '$(System.DefaultWorkingDirectory)'
-            artifactName: 'drop'
-            replaceExistingArchive: true
   
   - stage: Test
     displayName: 'Executar Testes'
@@ -79,18 +72,11 @@ stages:
               npm run build
             displayName: 'Build para Deploy'
 
-          - task: ArchiveFiles@2
-            inputs:
-              rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
-              includeRootFolder: false
-              archiveType: 'zip'
-              archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
-              
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'testtrack-connection'
               appName: 'meu-app-service'
-              package: '$(Build.ArtifactStagingDirectory)/app.zip'
+              package: '$(System.DefaultWorkingDirectory)'
               appSettings: |
                 DB_HOST=$(DB_HOST)
                 DB_PORT=$(DB_PORT)
