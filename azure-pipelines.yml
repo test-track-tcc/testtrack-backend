@@ -91,7 +91,7 @@ trigger:
       - main        
       - develop     
       - release
-      
+
 pr:
   branches:
     include:
@@ -114,7 +114,7 @@ variables:
   dbAdminPassword: 'PUC@1234'
 
 stages:
-•⁠  ⁠stage: BuildAndPushImage
+- stage: BuildAndPushImage
   displayName: 'Build & Push Docker Image'
   jobs:
   - job: BuildDockerImage
@@ -144,7 +144,7 @@ stages:
         Dockerfile: 'Dockerfile' 
         tags: 'latest'
 
-•⁠  ⁠stage: Deploy
+- stage: Deploy
   displayName: 'Deploy para Ambiente Compartilhado'
   dependsOn: BuildAndPushImage 
   condition: succeeded('BuildAndPushImage')
