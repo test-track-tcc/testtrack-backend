@@ -3,6 +3,7 @@ import { TestCasesService } from './test-case.service';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseStatusDto } from './dto/update-test-case.dto';
 import { TestCase } from './entities/test-case.entity';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { StatusCasoTeste } from '../config/enums';
 
 @ApiTags('test-cases')
