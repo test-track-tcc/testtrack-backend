@@ -67,20 +67,47 @@ stages:
         steps:
           - task: NodeTool@0
             inputs:
-              versionSpec: '18.x'
+              versionSpec: '22.x'
             displayName: 'Install Node.js'
 
           - script: |
               npm install
             displayName: 'Install Dependencies'
 
+          # Run Unit Tests
           - script: |
-              npx jest src/app.controller.spec.ts
-            displayName: 'Run Unit Tests'
+              npx jest src/app.controller.spec.ts --coverage --reporters=default --reporters=jest-junit
+            displayName: 'Run Unit Tests with Coverage and JUnit Report'
+            env:
+              JEST_JUNIT_OUTPUT_DIR: 'test-results/unit'
+              JEST_JUNIT_OUTPUT_NAME: 'junit.xml'
 
           - script: |
-              npx jest --config ./test/jest-e2e.json test/app.e2e-spec.ts
-            displayName: 'Run E2E Tests'
+              npx jest --config ./test/jest-e2e.json --reporters=default --reporters=jest-junit
+            displayName: 'Run E2E Tests with JUnit Report'
+            env:
+              JEST_JUNIT_OUTPUT_DIR: 'test-results/e2e'
+              JEST_JUNIT_OUTPUT_NAME: 'junit.xml'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Unit Test Results'
+            inputs:
+              testResultsFiles: 'test-results/unit/junit.xml'
+              testRunTitle: 'Unit Tests'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish E2E Test Results'
+            inputs:
+              testResultsFiles: 'test-results/e2e/junit.xml'
+              testRunTitle: 'E2E Tests'
+
+          # Publicar Code Coverage
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish Code Coverage'
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: 'coverage/cobertura-coverage.xml'
+              reportDirectory: 'coverage'
 
   - stage: Deploy
     displayName: 'Deploy para Ambiente Compartilhado'
