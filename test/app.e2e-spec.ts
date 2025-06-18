@@ -1,33 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common'; // Importa ValidationPipe
-import * as request from 'supertest';
-// REMOVA esta importação: import { App } from 'supertest/types';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import request from 'supertest';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
-  let app: INestApplication; // Correção: Tipo INestApplication
+  let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-
     app = moduleFixture.createNestApplication();
-    // **IMPORTANTE:** Habilita o ValidationPipe para testes E2E se ele for usado globalmente
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true })); // Adicionado
-
+    app.setGlobalPrefix('api');
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
   });
 
-  // **IMPORTANTE:** Fecha a aplicação após todos os testes para liberar recursos
   afterAll(async () => {
     await app.close();
   });
 
-  it('/ (GET) - should return "Hello World!"', () => { // Mais descritivo
+  it('/ (GET) - should return "Hello World :D !"', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api/') // <-- CORREÇÃO AQUI: Adicionado o prefixo global da API
       .expect(200)
-      .expect('Hello World!'); // Confirme que seu AppController retorna isso
+      .expect('Hello World :D !'); // Confirme que esta é a string exata
   });
 });

@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
   const config = new DocumentBuilder()
     .setTitle('TestTrack')
     .setDescription('Documentação interativa para a API de Usuários e Casos de Teste')
