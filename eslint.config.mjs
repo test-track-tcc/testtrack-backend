@@ -32,4 +32,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'warn'
     },
   },
+  {
+    "extends": ["plugin:prettier/recommended"]
+  }
 );

@@ -11,6 +11,7 @@ export enum TipoTeste {
 }
 
 export enum Prioridade {
+  NONE = 'NENHUM',
   LOW = 'BAIXA',
   MEDIUM = 'MEDIA',
   HIGH = 'ALTA',
@@ -18,10 +19,12 @@ export enum Prioridade {
 }
 
 export enum StatusCasoTeste {
+  NOT_STARTED = 'NAO_INICIADO',
   PENDING = 'PENDENTE',
   IN_PROGRESS = 'EM_ANDAMENTO',
   APPROVED = 'APROVADO',
   REPROVED = 'REPROVADO',
   BLOCKED = 'BLOQUEADO',
   CANCELED = 'CANCELADO',
+  FINISHED = 'CONCLUIDO',
 }

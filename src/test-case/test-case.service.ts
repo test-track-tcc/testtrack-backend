@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
-import { UpdateTestCaseStatusDto } from './dto/update-test-case.dto'; // Importe o DTO correto para update
-import { StatusCasoTeste } from '../config/enums'; // Certifique-se de que o caminho para enums está correto
+import { UpdateTestCaseDto } from './dto/update-test-case.dto';
+import { StatusCasoTeste } from '../config/enums';
 
 @Injectable()
 export class TestCasesService {
@@ -22,21 +22,20 @@ export class TestCasesService {
     return this.testCasesRepository.find();
   }
 
-  async findOne(id: string): Promise<TestCase | null> { // ID agora é string (UUID)
+  async findOne(id: string): Promise<TestCase | null> {
     return this.testCasesRepository.findOne({ where: { id } });
   }
 
-  async update(id: string, updateTestCaseDto: UpdateTestCaseStatusDto): Promise<TestCase> { // ID agora é string (UUID), DTO corrigido
+  async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
     const testCase = await this.testCasesRepository.findOne({ where: { id } });
     if (!testCase) {
       throw new NotFoundException('Caso de teste não encontrado.');
     }
-    // Aplica as propriedades do DTO no objeto da entidade
     Object.assign(testCase, updateTestCaseDto);
     return this.testCasesRepository.save(testCase);
   }
 
-  async remove(id: string): Promise<void> { // ID agora é string (UUID)
+  async remove(id: string): Promise<void> {
     const result = await this.testCasesRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException('Caso de teste não encontrado para exclusão.');
@@ -58,7 +57,6 @@ export class TestCasesService {
       throw new NotFoundException('Caso de teste não encontrado.');
     }
 
-    // Inicializa o array de comentários se for nulo
     if (!testCase.comentarios) {
       testCase.comentarios = [];
     }
@@ -88,7 +86,7 @@ export class TestCasesService {
     if (!testCase) {
       throw new NotFoundException('Caso de teste não encontrado.');
     }
-    testCase.tempoGasto = tempo; // Sobrescrevendo o tempo, ajuste se precisar somar
+    testCase.tempoGasto = tempo;
     return this.testCasesRepository.save(testCase);
   }
 

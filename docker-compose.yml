@@ -1,13 +1,32 @@
-version: '3.8' 
+version: '3.9'
 
 services:
-  nestjs-app:
-    build:
-      context: . 
-      dockerfile: Dockerfile
+  backend:
+    build: .
+    container_name: testtrack_backend
     ports:
-      - "3000:3000" 
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - db
     env_file:
       - .env
-    environment: 
-      NODE_ENV: development
+
+  db:
+    image: mysql:8
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testtrack
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
+    ports:
+      - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

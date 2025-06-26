@@ -1,6 +1,8 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { StatusCasoTeste } from '../../config/enums';
+import { TipoTeste, Prioridade, StatusCasoTeste} from '../../config/enums';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateTestCaseDto } from './create-test-case.dto';
 
 export class UpdateTestCaseStatusDto {
   @ApiProperty({ description: 'Novo status do caso de teste', enum: StatusCasoTeste, example: StatusCasoTeste.APPROVED })
@@ -11,4 +13,7 @@ export class UpdateTestCaseStatusDto {
   @IsOptional()
   @IsString()
   comment?: string;
+}
+export class UpdateTestCaseDto extends PartialType(CreateTestCaseDto) {
+
 }
