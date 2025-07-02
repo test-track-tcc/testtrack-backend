@@ -6,19 +6,23 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021", // Ou ES2022. Use uma versão moderna
+    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false, // Você pode mudar para true em projetos mais rigorosos
-    "noImplicitAny": false,    // Você pode mudar para true em projetos mais rigorosos
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true
+    "lib": ["ES2021", "DOM"],
   },
-  "exclude": ["node_modules", "dist"],
-  "include": ["src/**/*"]
+  "parseOptions": {
+    "project": [
+      "tsconfig.app.json"
+    ],
+    "createDefaultProgram": true
+  }
 }
