@@ -34,7 +34,13 @@ export class UsersService {
   }
 
   findOne(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+    const userFound = this.usersRepository.findOne({ where: { id } });
+
+    if (!userFound) {
+      throw new BadRequestException('User not found.');
+    }
+
+    return userFound;
   }
 
   async update(id: string, updateUserDto: Partial<CreateUserDto>): Promise<User> {

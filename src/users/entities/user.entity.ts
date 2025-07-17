@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToMany, OneToMany } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../../organization/entities/organization.entity';
@@ -28,6 +28,10 @@ export class User {
   @ApiProperty({ type: () => [Organization], description: 'Lista de organizações as quais o usuário pertence' })
   @ManyToMany(() => Organization, organization => organization.users)
   organizations: Organization[];
+
+  // Propriedade para acessar todas as organizações que este usuário administra.
+  @OneToMany(() => Organization, organization => organization.admin)
+  administeredOrganizations: Organization[]; 
 
   @ApiProperty({ description: 'Data e hora de criação do usuário', example: '2025-06-10T21:00:00.000Z' })
   @CreateDateColumn({ type: 'timestamp' })
