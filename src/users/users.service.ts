@@ -34,7 +34,10 @@ export class UsersService {
   }
 
   findOne(id: string): Promise<User | null> {
-    const userFound = this.usersRepository.findOne({ where: { id } });
+    const userFound = this.usersRepository.findOne({ 
+      where: { id },
+      relations: ['administeredOrganizations', 'organizations'] 
+    });
 
     if (!userFound) {
       throw new BadRequestException('User not found.');
