@@ -20,13 +20,13 @@ export class Organization {
   @CreateDateColumn({ type: 'timestamp' })
   createdDate: Date;
 
-  @ApiProperty({ description: 'ID do administrador da organização', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' })
-  @Column({ type: 'uuid' })
-  @IsUUID()
-  adminId: string;
+  // @ApiProperty({ description: 'ID do administrador da organização', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' })
+  // @Column({ type: 'uuid' })
+  // @IsUUID()
+  // adminId: string;
 
-  // Relação entre o admin e com várias organizações que administra.
-  @ManyToOne(() => User, user => user.administeredOrganizations)
+  // Relação entre o admin e com várias organizações que administra. Esse código já define a coluna adminId na tabela Organization.
+  @ManyToOne(() => User, user => user.administeredOrganizations, {cascade: ["insert" , "update"]})
   @JoinColumn({ name: 'adminId' })
   admin: User;
 

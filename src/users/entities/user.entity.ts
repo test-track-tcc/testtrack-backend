@@ -30,7 +30,11 @@ export class User {
   organizations: Organization[];
 
   // Propriedade para acessar todas as organizações que este usuário administra.
-  @OneToMany(() => Organization, organization => organization.admin)
+  @OneToMany(() => Organization, organization => organization.admin, {
+    eager: false,
+    nullable: true,
+    cascade: false
+  })
   administeredOrganizations: Organization[]; 
 
   @ApiProperty({ description: 'Data e hora de criação do usuário', example: '2025-06-10T21:00:00.000Z' })
