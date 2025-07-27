@@ -1,22 +1,15 @@
 services:
   api-dev:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile.dev
     container_name: api-dev
     ports:
       - "3000:3000"
     env_file:
-      - ./backend/.env
-    environment:
-      NODE_ENV: development
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: testtrack
+      - .env
     volumes:
-      - ./backend:/app
+      - .:/app
       - /app/node_modules
     depends_on:
       mysql:
@@ -27,19 +20,20 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: strongPassword
       MYSQL_DATABASE: testtrack
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: strongPassword
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -psecret --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -pstrongPassword --silent"]
       interval: 5s
       timeout: 3s
       retries: 20
+
 
 volumes:
   mysql_data:

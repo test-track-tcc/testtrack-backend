@@ -1,9 +1,9 @@
 API_DEV   = api-dev
 DB        = mysql
 
-.PHONY: dev-up dev-down rebuild api-bash db-bash logs ps prune
+.PHONY: run-dev dev-down rebuild api-bash db-bash logs ps prune
 
-dev-up:
+run-dev:
 	docker compose up $(DB) $(API_DEV)
 
 dev-down:
