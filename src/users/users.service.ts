@@ -42,8 +42,8 @@ export class UsersService {
     });
   }
 
-  findOne(id: string): Promise<User | null> {
-    const userFound = this.usersRepository.findOne({
+  async findOne(id: string): Promise<User> {
+    const userFound = await this.usersRepository.findOne({
       select: {
         id: true,
         name: true,

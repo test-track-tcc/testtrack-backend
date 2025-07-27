@@ -3,6 +3,7 @@ import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { AddUserToOrganizationDto } from './dto/addUserToOrganization.dto';
+import { RemoveUserFromOrganizationDto } from './dto/removeUserFromOrganization.dto';
 
 @Controller('organization')
 export class OrganizationController {
@@ -42,5 +43,10 @@ export class OrganizationController {
   remove(@Param('id') id: string) {
     //Logger.warn(`Removendo organização com ID: ${id}`);
     return this.organizationService.remove(id);
+  }
+
+  @Delete('/removeUser')
+  removeUser(@Body() removeUserFromOrganizationDto: RemoveUserFromOrganizationDto) {
+    return this.organizationService.removeUser(removeUserFromOrganizationDto.userId, removeUserFromOrganizationDto.organizationId);
   }
 }

@@ -16,15 +16,73 @@ export class OrganizationService {
     private usersService: UsersService
   ) {}
 
-  async create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
-    const newOrganization = this.organizationRepository.create(createOrganizationDto);
-    const existingOrganization = await this.organizationRepository.findOne({ where: { name: newOrganization.name } });
 
-    if (existingOrganization) {
-      throw new BadRequestException('Name already in use.');
+      //const existingOrganization = await this.organizationRepository.findOne({ where: { name: createOrganizationDto.name } });
+    //const validAdmin = await this.usersService.findOne(createOrganizationDto.adminId);
+    //Logger.log(`Validando administrador com ID: ${createOrganizationDto.adminId}`);
+    
+    //if (existingOrganization) {
+    //  throw new BadRequestException('Name already in use.');
+    //}
+
+  async create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
+    // Antes de criar uma nova organização, verificamos se o nome já está em uso e se o administrador é válido
+    // a partir do input do usuário e o inserindo como parâmetro na função validateCreateOrganizationDto.
+
+    try {
+      Logger.log(`Criando organização com nome: ${createOrganizationDto.name}`);
+      const validatedDto = await this.validateCreateOrganizationDto(createOrganizationDto);
+      Logger.log(`Validação concluída para a organização: ${validatedDto.name}`);
+      const newOrganization = this.organizationRepository.create({
+        ...validatedDto, // Copia os outros campos armazenados no DTO além de adminId.
+        admin: await this.usersService.findOne(validatedDto.adminId), // Associa o objeto User completo.
+      });
+      return this.organizationRepository.save(newOrganization);
+
+    } catch (error) {
+      Logger.error(`[ERRO]: ${error.message}`);
+      throw error;
+    }
+    
+  }
+
+  async validateCreateOrganizationDto(createOrganizationDto: CreateOrganizationDto): Promise<CreateOrganizationDto> {
+    // Verifica se o nome da organização é válido e não está vazio.
+    // [VÁLIDO] Será válido se e somente se o nome não for vazio ou nulo.
+    if (!createOrganizationDto.name || createOrganizationDto.name.trim() === '') {
+      throw new BadRequestException('Organization name is required.');
     }
 
-    return this.organizationRepository.save(newOrganization);
+    const existingOrganization = await this.organizationRepository.findOne({
+      where: { name: createOrganizationDto.name }
+    });
+
+    Logger.log(`Verificando se o nome da organização já está em uso: ${createOrganizationDto.name}`);
+
+    // Verifica se o nome da organização já está em uso.
+    // [VÁLIDO] Será válido se e somente se o nome não estiver em uso.
+    if (existingOrganization) {
+      throw new BadRequestException('Organization name already in use.');
+    }
+
+    Logger.log(`Nome da organização é valido: ${createOrganizationDto.name}`);
+
+    // Verifica se o id do admin é válido e não está vazio.
+    // [VÁLIDO] Será válido se e somente se o id não for vazio ou nulo.
+    if (!createOrganizationDto.adminId || createOrganizationDto.adminId.trim() === '') {
+      throw new BadRequestException('Admin ID is required.');
+    }
+    
+    const validAdmin = await this.usersService.findOne(createOrganizationDto.adminId);
+    Logger.log(`Verificando se o ID do administrador é válido: ${createOrganizationDto.adminId}`);
+    // Verifica se o administrador existe.
+    // [VÁLIDO] Será válido se e somente se o administrador existir.
+    if (!validAdmin) {
+      throw new BadRequestException('Invalid admin ID.');
+    }
+
+    Logger.log(`Id de admin é valido: ${createOrganizationDto.adminId}`);
+    return createOrganizationDto;
   }
 
   async findAll() {
@@ -155,6 +213,18 @@ export class OrganizationService {
     }
 
     organization.users.push(user);
+    await this.organizationRepository.save(organization);
+  }
+
+  async removeUser(userId: string, organizationId: string) {
+    const organization = await this.findOne(organizationId);
+    const user = await this.usersService.findOne(userId);
+
+    if (!user) {
+      throw new BadRequestException('User not found.');
+    }
+
+    organization.users = organization.users.filter(u => u.id !== userId);
     await this.organizationRepository.save(organization);
   }
 }
