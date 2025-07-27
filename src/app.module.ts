@@ -24,7 +24,9 @@ import { OrganizationModule } from './organization/organization.module';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: false,
+        ssl: {
+          rejectUnauthorized: false,
+        }
       }),
       inject: [ConfigService],
     }),
