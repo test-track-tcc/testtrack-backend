@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { TestCasesModule } from './test-case/test-case.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { OrganizationModule } from './organization/organization.module';
 
 @Module({
   imports: [
@@ -23,14 +24,13 @@ import { AppService } from './app.service';
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: {
-          rejectUnauthorized: true,
-        },
+        ssl: false,
       }),
       inject: [ConfigService],
     }),
     UsersModule,
     TestCasesModule,
+    OrganizationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

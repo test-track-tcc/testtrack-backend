@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -30,11 +31,36 @@ export class UsersService {
   }
 
   findAll(): Promise<User[]> {
-    return this.usersRepository.find();
+    return this.usersRepository.find({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        active: true,
+        createdAt: true
+      }
+    });
   }
 
-  findOne(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
+  async findOne(id: string): Promise<User> {
+    const userFound = await this.usersRepository.findOne({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        active: true,
+        createdAt: true
+      },
+      where: { id },
+      relations: ['administeredOrganizations', 'organizations'] 
+    });
+
+    if (!userFound) {
+      Logger.error(`User with ID ${id} not found.`);
+      throw new BadRequestException('User not found.');
+    }
+
+    return userFound;
   }
 
   async update(id: string, updateUserDto: Partial<CreateUserDto>): Promise<User> {

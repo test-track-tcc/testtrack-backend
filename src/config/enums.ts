@@ -1,4 +1,4 @@
-export enum TipoTeste {
+export enum TestType {
   FUNCTIONAL = 'FUNCIONAL',
   REGRESSION = 'REGRESSAO',
   PERFORMANCE = 'DESEMPENHO',
@@ -10,7 +10,7 @@ export enum TipoTeste {
   MANUAL = 'MANUAL',
 }
 
-export enum Prioridade {
+export enum Priority {
   NONE = 'NENHUM',
   LOW = 'BAIXA',
   MEDIUM = 'MEDIA',
@@ -18,7 +18,7 @@ export enum Prioridade {
   CRITICAL = 'CRITICA',
 }
 
-export enum StatusCasoTeste {
+export enum TestCaseStatus {
   NOT_STARTED = 'NAO_INICIADO',
   PENDING = 'PENDENTE',
   IN_PROGRESS = 'EM_ANDAMENTO',
