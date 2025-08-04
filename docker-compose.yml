@@ -3,7 +3,7 @@ services:
     build: .
     container_name: testtrack_backend
     ports:
-      - '3000:3000'
+      - '${PORT}:${PORT}'
     volumes:
       - .:/app
       - /app/node_modules
@@ -12,17 +12,18 @@ services:
     env_file:
       - .env
 
+  # Serviço do banco de dados MySQL
   db:
     image: mysql:8
     container_name: mysql_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: testtrack
-      MYSQL_USER: user
-      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '3306:3306'
+      - '${DB_PORT}:${DB_PORT}'
     volumes:
       - db_data:/var/lib/mysql
 
