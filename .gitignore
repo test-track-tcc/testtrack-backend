@@ -3,6 +3,13 @@
 /node_modules
 /build
 
+# env
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
 # Logs
 logs
 *.log
@@ -34,12 +41,6 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
-# dotenv environment variable files
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
 
 # temp directory
 .temp
