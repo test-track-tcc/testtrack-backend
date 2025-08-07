@@ -32,7 +32,7 @@ export class UsersController {
     name: 'id',
     description: 'ID do usuário (UUID)',
     type: 'string',
-    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' // Exemplo de UUID
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
   })
   @ApiResponse({ status: 200, description: 'Usuário encontrado', type: User })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
