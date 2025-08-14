@@ -35,8 +35,14 @@ export class AuthService {
     }
 
     return {
+      id: user.id,
+      email: user.email,
       access_token: this.jwtService.sign(payload),
       firstAccess: isFirstAccess,
     };
+  }
+
+  async logout(user: any) {
+    return { message: 'Logout realizado com sucesso.' };
   }
 }
