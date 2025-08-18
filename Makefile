@@ -1,28 +1,25 @@
-API_DEV   = api-dev
-DB        = mysql
+build:
+	docker compose build
 
-.PHONY: run-dev dev-down rebuild api-bash db-bash logs ps prune
+up:
+	docker compose up -d
 
-run-dev:
-	docker compose up $(DB) $(API_DEV)
-
-dev-down:
+down:
 	docker compose down
-
-rebuild:
-	docker compose build --no-cache $(DB) $(API_DEV)
-
-api-bash:
-	docker compose exec $(API_DEV) sh
-
-db-bash:
-	docker compose exec $(DB) bash
 
 logs:
 	docker compose logs -f
 
-ps:
-	docker compose ps
+restart:
+	docker compose down && docker compose up -d
+
+bash-backend:
+	docker exec -it nest_backend bash
+
+bash-mysql:
+	docker exec -it mysql_db bash
 
 prune:
-	docker system prune -af --volumes
+	docker compose down -v --remove-orphans
+	docker system prune -af
+

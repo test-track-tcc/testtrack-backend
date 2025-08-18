@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,25 +25,53 @@ export class OrganizationService {
     //  throw new BadRequestException('Name already in use.');
     //}
 
+  // async create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
+  //   // Antes de criar uma nova organização, verificamos se o nome já está em uso e se o administrador é válido
+  //   // a partir do input do usuário e o inserindo como parâmetro na função validateCreateOrganizationDto.
+
+  //   try {
+  //     Logger.log(`Criando organização com nome: ${createOrganizationDto.name}`);
+  //     const validatedDto = await this.validateCreateOrganizationDto(createOrganizationDto);
+  //     Logger.log(`Validação concluída para a organização: ${validatedDto.name}`);
+  //     const newOrganization = this.organizationRepository.create({
+  //       ...validatedDto, // Copia os outros campos armazenados no DTO além de adminId.
+  //       admin: await this.usersService.findOne(validatedDto.adminId), // Associa o objeto User completo.
+  //     });
+  //     return this.organizationRepository.save(newOrganization);
+
+  //   } catch (error) {
+  //     Logger.error(`[ERRO]: ${error.message}`);
+  //     throw error;
+  //   }
+    
+  // }
+
   async create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
-    // Antes de criar uma nova organização, verificamos se o nome já está em uso e se o administrador é válido
-    // a partir do input do usuário e o inserindo como parâmetro na função validateCreateOrganizationDto.
+    const { adminId, ...organizationData } = createOrganizationDto;
 
-    try {
-      Logger.log(`Criando organização com nome: ${createOrganizationDto.name}`);
-      const validatedDto = await this.validateCreateOrganizationDto(createOrganizationDto);
-      Logger.log(`Validação concluída para a organização: ${validatedDto.name}`);
-      const newOrganization = this.organizationRepository.create({
-        ...validatedDto, // Copia os outros campos armazenados no DTO além de adminId.
-        admin: await this.usersService.findOne(validatedDto.adminId), // Associa o objeto User completo.
-      });
-      return this.organizationRepository.save(newOrganization);
+    // 1. Buscamos o usuário que será o administrador.
+    const adminUser = await this.usersService.findOne(adminId);
 
-    } catch (error) {
-      Logger.error(`[ERRO]: ${error.message}`);
-      throw error;
+    // 2. Verificação crucial: Se o usuário não for encontrado, lançamos um erro.
+    // Isso resolve o problema de atribuir 'null' à propriedade 'admin'.
+    if (!adminUser) {
+      throw new NotFoundException(`Usuário com ID "${adminId}" não encontrado. Não é possível criar a organização.`);
     }
     
+    // Boa prática: Verificar se já existe uma organização com o mesmo nome
+    const existingOrg = await this.organizationRepository.findOne({where: { name: organizationData.name }});
+    if (existingOrg) {
+        throw new BadRequestException(`Organização com o nome "${organizationData.name}" já existe.`);
+    }
+
+    // 3. Criamos a instância da organização com os dados e o objeto 'admin' completo.
+    const newOrganization = this.organizationRepository.create({
+      ...organizationData,
+      admin: adminUser, // Agora estamos passando um objeto User, não User | null
+    });
+
+    // 4. Salvamos a nova organização. O tipo de retorno agora está correto.
+    return this.organizationRepository.save(newOrganization);
   }
 
   async validateCreateOrganizationDto(createOrganizationDto: CreateOrganizationDto): Promise<CreateOrganizationDto> {

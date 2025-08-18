@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -25,42 +24,22 @@ export class UsersService {
     const newUser = this.usersRepository.create({
       email,
       password: hashedPassword,
+      firstAccess: true,
       ...rest,
     });
     return this.usersRepository.save(newUser);
   }
 
   findAll(): Promise<User[]> {
-    return this.usersRepository.find({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        active: true,
-        createdAt: true
-      }
-    });
+    return this.usersRepository.find();
   }
 
-  async findOne(id: string): Promise<User> {
-    const userFound = await this.usersRepository.findOne({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        active: true,
-        createdAt: true
-      },
-      where: { id },
-      relations: ['administeredOrganizations', 'organizations'] 
-    });
+  findOne(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
+  }
 
-    if (!userFound) {
-      Logger.error(`User with ID ${id} not found.`);
-      throw new BadRequestException('User not found.');
-    }
-
-    return userFound;
+  findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
   }
 
   async update(id: string, updateUserDto: Partial<CreateUserDto>): Promise<User> {
@@ -75,6 +54,10 @@ export class UsersService {
 
     Object.assign(user, updateUserDto);
     return this.usersRepository.save(user);
+  }
+
+  async updateFirstAccess(id: string, firstAccess: boolean): Promise<void> {
+    await this.usersRepository.update(id, { firstAccess });
   }
 
   async remove(id: string): Promise<void> {

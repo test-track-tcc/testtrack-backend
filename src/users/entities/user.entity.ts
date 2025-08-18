@@ -37,6 +37,10 @@ export class User {
   })
   administeredOrganizations: Organization[]; 
 
+  @ApiProperty({ description: 'Indica se é o primeiro acesso do usuário', example: true })
+  @Column({ default: true })
+  firstAccess: boolean;
+
   @ApiProperty({ description: 'Data e hora de criação do usuário', example: '2025-06-10T21:00:00.000Z' })
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
