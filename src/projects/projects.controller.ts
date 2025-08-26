@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -37,5 +38,14 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Remove um projeto' })
   remove(@Param('id') id: string) {
     return this.projectsService.remove(id);
+  }
+
+  @Post(':projectId/users')
+  @ApiOperation({ summary: 'Adiciona um usuário a um projeto específico' })
+  addUserToProject(
+    @Param('projectId') projectId: string,
+    @Body() addUserToProjectDto: AddUserToProjectDto,
+  ) {
+    return this.projectsService.addUserToProject(projectId, addUserToProjectDto);
   }
 }

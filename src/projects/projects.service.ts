@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
@@ -7,6 +7,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { User } from '../users/entities/user.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
+import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -103,12 +104,52 @@ export class ProjectsService {
     }
   }
 
-  async addUserToProject(projectId: string, userId: string, role: ProjectRole): Promise<ProjectUser> {
-    const project = await this.findOne(projectId);
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+  async addUserToProject(
+    projectId: string,
+    addUserToProjectDto: AddUserToProjectDto,
+  ): Promise<ProjectUser> {
+    const { userId, role } = addUserToProjectDto;
+
+    const project = await this.projectsRepository.findOne({
+      where: { id: projectId },
+      relations: ['organization'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID "${projectId}" not found`);
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['organizations'],
+    });
 
     if (!user) {
       throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+
+    if (!user.active) {
+      throw new BadRequestException(`User with ID "${userId}" is not active.`);
+    }
+
+    if (
+      !user.organizations ||
+      !user.organizations.some(org => org.id === project.organization.id)
+    ) {
+      throw new BadRequestException(
+        `User with ID "${userId}" does not belong to the same organization as the project.`,
+      );
+    } // teste
+
+    const existingProjectUser = await this.projectUsersRepository.findOne({
+        where: {
+            project: { id: projectId },
+            user: { id: userId }
+        }
+    });
+
+    if (existingProjectUser) {
+        throw new BadRequestException(`User with ID "${userId}" is already in the project.`);
     }
 
     const newProjectUser = this.projectUsersRepository.create({

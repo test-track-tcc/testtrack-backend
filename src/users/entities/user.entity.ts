@@ -32,7 +32,7 @@ export class User {
 
   @ApiProperty({ type: () => [Organization], description: 'Lista de projetos as quais o usuário pertence' })
   @OneToMany(() => ProjectUser, projectUser => projectUser.user)
-  projectUsers: ProjectUser[];
+  projectUsers: ProjectUser[];  
 
   // Propriedade para acessar todas as organizações que este usuário administra.
   @OneToMany(() => Organization, organization => organization.admin, {
