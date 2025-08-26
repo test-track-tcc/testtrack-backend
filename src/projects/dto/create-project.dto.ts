@@ -1,18 +1,24 @@
-import { IsString, IsUUID, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProjectDto {
-  @ApiProperty({ description: 'Nome do projeto', example: 'TestTrack' })
+  @ApiProperty({ description: 'Nome do projeto' })
   @IsString()
-  @MinLength(3)
-  @MaxLength(255)
+  @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: 'Descrição detalhada do projeto', example: 'Ferramenta para gestão de testes automatizados.' })
+  @ApiProperty({ description: 'Descrição do projeto', required: false })
   @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 
-  @ApiProperty({ description: 'ID do administrador principal', example: 'f0e9d8c7-b6a5-4321-fedc-ba9876543210' })
+  @ApiProperty({ description: 'ID da organização à qual o projeto pertence' })
   @IsUUID()
-  id_admin: string;
+  @IsNotEmpty()
+  organizationId: string;
+
+  @ApiProperty({ description: 'ID do usuário que está criando o projeto (owner)' })
+  @IsUUID()
+  @IsNotEmpty()
+  ownerId: string;
 }

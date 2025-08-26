@@ -1,9 +1,12 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from 'src/users/entities/user.entity';
+import { Organization } from 'src/organization/entities/organization.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { ProjectUser } from './project-user.entity';
 
 @Entity('projects')
-export class Project {s
+export class Project {
   @ApiProperty({ description: 'ID único do projeto (UUID)', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef' })
   @PrimaryColumn('uuid')
   id: string;
@@ -16,9 +19,15 @@ export class Project {s
   @Column('text')
   description: string;
 
-  @ApiProperty({ description: 'ID do administrador principal (UUID)', example: 'f0e9d8c7-b6a5-4321-fedc-ba9876543210' })
-  @Column('uuid')
-  id_admin: string;
+  @ApiProperty({ type: () => User, description: 'O usuário que é dono do projeto' })
+  @ManyToOne(() => User)
+  owner: User;
+
+  @OneToMany(() => ProjectUser, projectUser => projectUser.project, { cascade: true })
+  projectUsers: ProjectUser[];
+
+  @ManyToOne(() => Organization, organization => organization.projects)
+  organization: Organization;
 
   @ApiProperty({ description: 'Data e hora de criação do projeto', example: '2025-06-09T21:34:52.000Z' })
   @CreateDateColumn({ type: 'timestamp' })
