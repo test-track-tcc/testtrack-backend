@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseDto } from './dto/update-test-case.dto';
-import { StatusCasoTeste } from '../config/enums';
+import { TestCaseStatus } from '../config/enums';
 
 @Injectable()
 export class TestCasesService {
@@ -42,7 +42,7 @@ export class TestCasesService {
     }
   }
 
-  async updateStatus(id: string, newStatus: StatusCasoTeste): Promise<TestCase> {
+  async updateStatus(id: string, newStatus: TestCaseStatus): Promise<TestCase> {
     const testCase = await this.testCasesRepository.findOne({ where: { id } });
     if (!testCase) {
       throw new NotFoundException('Caso de teste não encontrado.');
@@ -51,32 +51,32 @@ export class TestCasesService {
     return this.testCasesRepository.save(testCase);
   }
 
-  async addComment(id: string, idUsuario: string, comentario: string): Promise<TestCase> {
+  async addComment(id: string, idUser: string, comment: string): Promise<TestCase> {
     const testCase = await this.testCasesRepository.findOne({ where: { id } });
     if (!testCase) {
       throw new NotFoundException('Caso de teste não encontrado.');
     }
 
-    if (!testCase.comentarios) {
-      testCase.comentarios = [];
+    if (!testCase.comments) {
+      testCase.comments = [];
     }
 
-    testCase.comentarios.push({ idUsuario, comentario, data: new Date() });
+    testCase.comments.push({ idUser, comment, date: new Date() });
     return this.testCasesRepository.save(testCase);
   }
 
-  async attachEvidence(id: string, idAnexo: string): Promise<TestCase> {
+  async attachEvidence(id: string, idAttachment: string): Promise<TestCase> {
     const testCase = await this.testCasesRepository.findOne({ where: { id } });
     if (!testCase) {
       throw new NotFoundException('Caso de teste não encontrado.');
     }
 
-    if (!testCase.anexos) {
-      testCase.anexos = [];
+    if (!testCase.attachment) {
+      testCase.attachment = [];
     }
 
-    if (!testCase.anexos.includes(idAnexo)) {
-      testCase.anexos.push(idAnexo);
+    if (!testCase.attachment.includes(idAttachment)) {
+      testCase.attachment.push(idAttachment);
     }
     return this.testCasesRepository.save(testCase);
   }
@@ -86,7 +86,7 @@ export class TestCasesService {
     if (!testCase) {
       throw new NotFoundException('Caso de teste não encontrado.');
     }
-    testCase.tempoGasto = tempo;
+    testCase.timeSpent = tempo;
     return this.testCasesRepository.save(testCase);
   }
 

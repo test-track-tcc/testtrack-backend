@@ -6,14 +6,14 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021", // Ou ES2022. Use uma versão moderna
+    "target": "ES2021", 
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false, // Você pode mudar para true em projetos mais rigorosos
-    "noImplicitAny": false,    // Você pode mudar para true em projetos mais rigorosos
+    "strictNullChecks": false,
+    "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,

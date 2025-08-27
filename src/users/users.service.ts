@@ -24,6 +24,7 @@ export class UsersService {
     const newUser = this.usersRepository.create({
       email,
       password: hashedPassword,
+      firstAccess: true,
       ...rest,
     });
     return this.usersRepository.save(newUser);
@@ -35,6 +36,10 @@ export class UsersService {
 
   findOne(id: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { id } });
+  }
+
+  findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
   }
 
   async update(id: string, updateUserDto: Partial<CreateUserDto>): Promise<User> {
@@ -49,6 +54,10 @@ export class UsersService {
 
     Object.assign(user, updateUserDto);
     return this.usersRepository.save(user);
+  }
+
+  async updateFirstAccess(id: string, firstAccess: boolean): Promise<void> {
+    await this.usersRepository.update(id, { firstAccess });
   }
 
   async remove(id: string): Promise<void> {
