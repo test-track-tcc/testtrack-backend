@@ -38,8 +38,8 @@ export class ProjectsService {
     const project = this.projectsRepository.create({
       name,
       description,
-      organization, // Atribui o objeto Organization
-      owner,        // Atribui o objeto User
+      organization,
+      owner,
     });
 
     const savedProject = await this.projectsRepository.save(project);
@@ -58,6 +58,16 @@ export class ProjectsService {
     return this.projectsRepository.find({ relations: ['organization', 'owner'] });
   }
 
+  findAllByOrganization(organizationId: string): Promise<Project[]> {
+    return this.projectsRepository.find({
+      where: {
+        organization: {
+          id: organizationId,
+        },
+      },
+    });
+  }
+
   async findOne(id: string): Promise<Project> {
     const project = await this.projectsRepository.findOne({ where: { id }, relations: ['organization', 'owner'] });
     if (!project) {
@@ -67,16 +77,13 @@ export class ProjectsService {
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto): Promise<Project> {
-    // Busca o projeto existente para garantir que ele exista
     const project = await this.findOne(id);
 
-    // Desestrutura o DTO para tratar as propriedades de texto e as relações separadamente
     const { name, description, organizationId, ownerId } = updateProjectDto;
 
     if (name) project.name = name;
     if (description) project.description = description;
 
-    // Se um novo organizationId foi fornecido, busca e atualiza a relação
     if (organizationId) {
       const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
       if (!organization) {
@@ -85,7 +92,6 @@ export class ProjectsService {
       project.organization = organization;
     }
 
-    // Se um novo ownerId foi fornecido, busca e atualiza a relação
     if (ownerId) {
       const owner = await this.usersRepository.findOne({ where: { id: ownerId } });
       if (!owner) {
@@ -139,7 +145,7 @@ export class ProjectsService {
       throw new BadRequestException(
         `User with ID "${userId}" does not belong to the same organization as the project.`,
       );
-    } // teste
+    } 
 
     const existingProjectUser = await this.projectUsersRepository.findOne({
         where: {

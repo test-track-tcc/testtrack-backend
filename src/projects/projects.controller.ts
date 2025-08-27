@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, ParseUUIDPipe } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
+import { Project } from './entities/project.entity';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -20,6 +21,13 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Lista todos os projetos' })
   findAll() {
     return this.projectsService.findAll();
+  }
+
+  @Get('by-organization/:orgId')
+  @ApiOperation({ summary: 'Busca todos os projetos de uma organização específica' })
+  @ApiResponse({ status: 200, description: 'Lista de projetos retornada com sucesso', type: [Project] })
+  findAllByOrganization(@Param('orgId', ParseUUIDPipe) orgId: string): Promise<Project[]> {
+    return this.projectsService.findAllByOrganization(orgId);
   }
 
   @Get(':id')

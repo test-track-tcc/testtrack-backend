@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from 'src/users/entities/user.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
@@ -27,6 +27,7 @@ export class Project {
   projectUsers: ProjectUser[];
 
   @ManyToOne(() => Organization, organization => organization.projects)
+  @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
   @ApiProperty({ description: 'Data e hora de criação do projeto', example: '2025-06-09T21:34:52.000Z' })
