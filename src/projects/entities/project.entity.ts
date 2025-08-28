@@ -4,6 +4,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProjectUser } from './project-user.entity';
+import { projectStatus } from 'src/enum/projectStatus';
 
 @Entity('projects')
 export class Project {
@@ -29,6 +30,26 @@ export class Project {
   @ManyToOne(() => Organization, organization => organization.projects)
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
+
+  @ApiProperty({ description: 'Data de início do projeto', example: '2025-01-01' })
+  @Column({ type: 'date', nullable: true })
+  startDate: Date;
+
+  @ApiProperty({ description: 'Previsão de finalização do projeto', example: '2025-12-31' })
+  @Column({ type: 'date', nullable: true })
+  estimateEnd: Date;
+
+  @ApiProperty({ description: 'Data de conclusão do projeto', example: '2025-12-15' })
+  @Column({ type: 'date', nullable: true })
+  conclusionDate: Date;
+
+  @ApiProperty({
+    description: 'Status atual do projeto',
+    enum: projectStatus,
+    example: projectStatus.IN_PROGRESS,
+  })
+  @Column({ type: 'enum', enum: projectStatus, default: projectStatus.NOT_STARTED })
+  status: projectStatus;
 
   @ApiProperty({ description: 'Data e hora de criação do projeto', example: '2025-06-09T21:34:52.000Z' })
   @CreateDateColumn({ type: 'timestamp' })
