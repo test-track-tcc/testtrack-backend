@@ -2,6 +2,7 @@ import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToMany, OneToMany 
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../../organization/entities/organization.entity';
+import { Permission } from 'src/permission/entities/permission.entity';
 
 @Entity('users')
 export class User {
@@ -44,6 +45,10 @@ export class User {
   @ApiProperty({ description: 'Data e hora de criação do usuário', example: '2025-06-10T21:00:00.000Z' })
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+
+  // lista de permissões criadas por este usuário
+  @OneToMany(() => Permission, (p) => p.createdBy)
+  createdPermissions?: Permission[];
 
   constructor() {
     if (!this.id) {
