@@ -12,16 +12,18 @@ import {
   OneToOne
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { AccessGroup } from '../../access-group/entities/access-group.entity';
+//import { AccessGroup } from '../../access-group/entities/access-group.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsUUID } from 'class-validator';
+import { Permission } from 'src/permission/entities/permission.entity';
+import { Organization } from 'src/organization/entities/organization.entity';
 
-@Entity({ name: 'permission' })
-export class Permission {
+@Entity({ name: 'access_group' })
+export class AccessGroup {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ApiProperty({ example: 'Adicionar Usuário' })
+  @ApiProperty({ example: 'Devs e estagiários' })
   @Column({ unique: true })
   name: string;
 
@@ -33,8 +35,8 @@ export class Permission {
   createdDate: Date;
 
 
-  // quem criou a permissão
-  @ManyToOne(() => User, (user) => user.createdPermissions, {
+  // quem criou o grupo de acesso
+  @ManyToOne(() => User, (user) => user.createdAccessGroups, {
     nullable: true,
     onDelete: 'SET NULL', // se o usuário for removido, manter a permissão
     cascade: false,       // NÃO criar/alterar usuário automaticamente
@@ -52,18 +54,16 @@ export class Permission {
   updatedAt: Date;
 
 
-  @ApiProperty({ description: 'ID do projeto da organização associado', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef', required: true })
-  //@OneToOne(() => Project, (project) => project.permissions, {
-  //  nullable: false,
-  //  onDelete: 'CASCADE',
-  //})
-  @IsUUID()
-  @IsNotEmpty({ message: 'O ID do projeto associado não pode estar vazio.' })
-  projetoId: string;
+  // Grupos de acessos podem ter várias permissões
+  @ManyToMany(() => Permission, p => p.accessGroups)
+  @JoinTable()
+  permissions: Permission[];
 
-  
-  // se Permission pertence a AccessGroup (ManyToMany)
-  @ManyToMany(() => AccessGroup, (group) => group.permissions)
-  accessGroups?: AccessGroup[];
 
+  // Grupo pertence a 1 organização
+  @ManyToOne(() => Organization, org => org.accessGroups, {
+    onDelete: 'CASCADE', // se deletar org, pode opcionalmente remover grupos
+    nullable: false,
+  })
+  organization: Organization;
 }

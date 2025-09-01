@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTabl
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-//import { AccessGroup } from 'src/access-group/entities/access-group.entity';
+import { AccessGroup } from 'src/access-group/entities/access-group.entity';
 
 @Entity()
 export class Organization {
@@ -38,7 +38,7 @@ export class Organization {
   users: User[];
 
   //  // Define a relação de muitos pra muitos entre organizações e usuários.
-  //@ApiProperty({ type: () => [AccessGroup], description: 'Lista de grupos de acessos que pertencem à organização' })
-  //@OneToMany(() => AccessGroup, group => group.organization)
-  //accessGroup: AccessGroup[];
+  @ApiProperty({ type: () => [AccessGroup], description: 'Lista de grupos de acessos que pertencem à organização' })
+  @OneToMany(() => AccessGroup, group => group.organization)
+  accessGroups: AccessGroup[];
 }
