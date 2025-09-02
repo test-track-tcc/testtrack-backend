@@ -69,9 +69,9 @@ export class UsersService {
 
   async findUserOrganizationsFind(userId: string): Promise<Organization[]> {
   return this.orgRepo.find({
-    where: { users: { id: userId } },
-    relations: [] // adicione relations se quiser carregar campos relacionados
-  });
-}
+      where: { users: { id: userId } },
+      relations: [] 
+    });
+  }
 
 }

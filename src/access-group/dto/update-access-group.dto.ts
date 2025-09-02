@@ -9,6 +9,6 @@ export class UpdateAccessGroupDto extends PartialType(CreateAccessGroupDto) {
     // Id é passado como parâmetro na rota para identificar o grupo de acesso a ser atualizado.
     @ApiProperty()
     @IsArray()
-    @IsUUID('all', { each: true })
+    @IsUUID("all", { each: true })
     permissionIds?: string[];
 }

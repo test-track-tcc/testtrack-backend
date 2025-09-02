@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Logger, Put } from '@nestjs/common';
 import { CreateAccessGroupDto } from './dto/create-access-group.dto';
 import { AccessGroupService } from './access-group.service';
+import { UpdateAccessGroupDto } from './dto/update-access-group.dto';
 
 @Controller('access-group')
 export class AccessGroupController {

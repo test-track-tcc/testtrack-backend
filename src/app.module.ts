@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { OrganizationModule } from './organization/organization.module';
 import { AuthModule } from './auth/auth.module';
 import { PermissionModule } from './permission/permission.module';
+import { AccessGroupModule } from './access-group/access-group.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { PermissionModule } from './permission/permission.module';
     TestCasesModule,
     OrganizationModule,
     AuthModule,
-    PermissionModule
+    PermissionModule,
+    AccessGroupModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -8,7 +8,7 @@ import { CreateAccessGroupDto } from './dto/create-access-group.dto';
 import { UpdateAccessGroupDto } from './dto/update-access-group.dto';
 
 @Injectable()
-export class AccessGroupsService {
+export class AccessGroupService {
   constructor(
     @InjectRepository(AccessGroup)
     private groupsRepo: Repository<AccessGroup>,
@@ -43,7 +43,7 @@ export class AccessGroupsService {
   }
 
   // Busca um grupo pelo id, carregando organization e permissions.
-  async find(id: string): Promise<AccessGroup> {
+  async findOne(id: string): Promise<AccessGroup> {
     const group = await this.groupsRepo.findOne({
       where: { id },
       relations: ['permissions', 'organization'],
@@ -86,7 +86,7 @@ export class AccessGroupsService {
   }
 
   // Atualiza um grupo.
-  async update(id: string, dto: UpdateAccessGroupDto): Promise<AccessGroup> {
+  async update(id: string, updateAccessGroupDto: UpdateAccessGroupDto): Promise<AccessGroup> {
     const group = await this.groupsRepo.findOne({
       where: { id },
       relations: ['permissions', 'organization'],
@@ -98,32 +98,22 @@ export class AccessGroupsService {
 
     // Atualiza campos simples
     this.groupsRepo.merge(group, {
-      name: dto.name,
-      description: dto.description,
+      name: updateAccessGroupDto.name,
+      description: updateAccessGroupDto.description,
     });
 
     // Se vier permissionIds, valida e substitui
-    if (dto.permissionIds) {
-      const permissions = await this.permRepo.find({ where: { id: In(dto.permissionIds) } });
-      if (permissions.length !== dto.permissionIds.length) {
+    if (updateAccessGroupDto.permissionIds) {
+      const permissions = await this.permRepo.find({ where: { id: In(updateAccessGroupDto.permissionIds) } });
+      if (permissions.length !== updateAccessGroupDto.permissionIds.length) {
         throw new BadRequestException('Algumas permissões informadas não foram encontradas.');
       }
       group.permissions = permissions;
     }
 
-    // Se trocar a organização (raro), valida nova org
-    if (dto.organizationId && dto.organizationId !== group.organization?.id) {
-      const newOrg = await this.orgRepo.findOne({ where: { id: dto.organizationId } });
-      if (!newOrg) {
-        throw new BadRequestException(`Nova organização com id "${dto.organizationId}" não encontrada.`);
-      }
-      group.organization = newOrg;
-    }
-
     try {
       return await this.groupsRepo.save(group);
     } catch (error) {
-      this.logger.error(`Erro ao atualizar grupo ${id}: ${error.message}`, error);
       throw new BadRequestException('Erro ao atualizar o grupo de acesso. Verifique os dados.');
     }
   }
@@ -140,7 +130,6 @@ export class AccessGroupsService {
     try {
       await this.groupsRepo.delete(id);
     } catch (error) {
-      this.logger.error(`Erro ao deletar grupo ${id}: ${error.message}`, error);
       throw new BadRequestException('Erro ao deletar o grupo de acesso.');
     }
   }

@@ -1,20 +1,34 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PermissionController } from './permission.controller';
-import { PermissionService } from './permission.service';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Logger, Put } from '@nestjs/common';
+import { AccessGroupService } from './access-group.service'; 
+import { CreateAccessGroupDto } from './dto/create-access-group.dto';
+import { UpdateAccessGroupDto } from './dto/update-access-group.dto';
 
-describe('PermissionController', () => {
-  let controller: PermissionController;
+@Controller('permission')
+export class PermissionController {
+  constructor(private readonly accessGroupService: AccessGroupService) {}
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [PermissionController],
-      providers: [PermissionService],
-    }).compile();
+  @Post()
+  create(@Body() createAccessGroupDto: CreateAccessGroupDto) {
+    return this.accessGroupService.create(createAccessGroupDto);
+  }
 
-    controller = module.get<PermissionController>(PermissionController);
-  });
+  @Get()
+  findAll() {
+    return this.accessGroupService.findAll();
+  }
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-});
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.accessGroupService.findOne(id);
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.accessGroupService.remove(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateAccessGroupDto: UpdateAccessGroupDto) {
+    return this.accessGroupService.update(id, updateAccessGroupDto);
+  }
+}
