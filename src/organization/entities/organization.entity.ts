@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable, CreateDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable, CreateDateColumn, JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Project } from 'src/projects/entities/project.entity';
 import { IsUUID } from 'class-validator';
 
 @Entity()
@@ -29,6 +30,9 @@ export class Organization {
   @ManyToOne(() => User, user => user.administeredOrganizations, {cascade: ["insert" , "update"]})
   @JoinColumn({ name: 'adminId' })
   admin: User;
+
+  @OneToMany(() => Project, project => project.organization)
+  projects: Project[];
 
   // Define a relação de muitos pra muitos entre organizações e usuários.
   @ApiProperty({ type: () => [User], description: 'Lista de usuários que pertencem à organização' })

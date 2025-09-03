@@ -41,7 +41,6 @@ export class OrganizationController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    //Logger.warn(`Removendo organização com ID: ${id}`);
     return this.organizationService.remove(id);
   }
 

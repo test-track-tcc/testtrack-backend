@@ -44,6 +44,19 @@ export class UsersController {
     return user;
   }
 
+  @Get('email/:email')
+  @ApiOperation({ summary: 'Busca um usuário pelo email' })
+  @ApiParam({ name: 'email', description: 'Email do usuário', type: 'string' })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado', type: User })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async findByEmail(@Param('email') email: string): Promise<User> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+    return user;
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza um usuário existente' })
   @ApiParam({ name: 'id', description: 'ID do usuário (UUID)', type: 'string' })
