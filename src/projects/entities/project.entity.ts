@@ -44,7 +44,13 @@ export class Project {
   @Column({ type: 'date', nullable: true })
   conclusionDate: Date;
 
-  @ApiProperty({ type: () => [TestCase], description: 'Lista de casos de teste associados ao projeto' })
+  @ApiProperty({ description: 'Prefixo para IDs de casos de teste', example: 'TT' })
+  @Column({ length: 10, unique: true })
+  prefix: string;
+
+  @Column({ type: 'int', default: 0 })
+  testCaseSequence: number;
+
   @OneToMany(() => TestCase, testCase => testCase.project)
   testCases: TestCase[];
 

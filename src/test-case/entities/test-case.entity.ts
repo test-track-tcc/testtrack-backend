@@ -55,7 +55,10 @@ export class TestCase {
   @JoinColumn({ name: 'responsibleId' })
   responsible: User | null;
 
-  @ApiProperty({ type: () => Project, description: 'Projeto ao qual o caso de teste pertence' })
+  @ApiProperty({ description: 'ID sequencial único dentro do projeto', example: 1 })
+  @Column({ type: 'int' })
+  projectSequenceId: number;
+
   @ManyToOne(() => Project, project => project.testCases, { onDelete: 'CASCADE' })
   project: Project;
 

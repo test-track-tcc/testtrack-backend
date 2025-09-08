@@ -9,6 +9,15 @@ import { Organization } from 'src/organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
 
+function generatePrefix(name: string): string {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 10);
+}
+
 @Injectable()
 export class ProjectsService {
   constructor(
@@ -25,6 +34,8 @@ export class ProjectsService {
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
     const { name, description, organizationId, ownerId } = createProjectDto;
 
+    const prefix = generatePrefix(name);
+
     const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
     if (!organization) {
       throw new NotFoundException(`Organization with ID "${organizationId}" not found`);
@@ -40,6 +51,7 @@ export class ProjectsService {
       description,
       organization,
       owner,
+      prefix,
     });
 
     const savedProject = await this.projectsRepository.save(project);

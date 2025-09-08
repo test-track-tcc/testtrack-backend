@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource  } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseDto } from './dto/update-test-case.dto';
@@ -11,6 +11,7 @@ import { User } from 'src/users/entities/user.entity';
 @Injectable()
 export class TestCasesService {
   constructor(
+    private dataSource: DataSource,
     @InjectRepository(TestCase)
     private testCasesRepository: Repository<TestCase>,
     @InjectRepository(Project)
@@ -20,34 +21,38 @@ export class TestCasesService {
   ) {}
 
   async create(createTestCaseDto: CreateTestCaseDto): Promise<TestCase> {
-    const { projectId, createdById, responsibleId, ...testCaseData } = createTestCaseDto;
+    return this.dataSource.transaction(async transactionalEntityManager => {
+      const { projectId, createdById, responsibleId, ...testCaseData } = createTestCaseDto;
 
-    const project = await this.projectRepository.findOneBy({ id: projectId });
-    if (!project) {
-      throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado.`);
-    }
+      const project = await transactionalEntityManager.findOne(Project, {
+        where: { id: projectId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!project) throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado.`);
 
-    const createdBy = await this.userRepository.findOneBy({ id: createdById });
-    if (!createdBy) {
-        throw new NotFoundException(`Usuário criador com ID "${createdById}" não encontrado.`);
-    }
+      project.testCaseSequence += 1;
+      const newSequenceId = project.testCaseSequence;
 
-    let responsible: User | null = null;
-    if (responsibleId) {
-        responsible = await this.userRepository.findOneBy({ id: responsibleId });
-        if (!responsible) {
-            throw new NotFoundException(`Usuário responsável com ID "${responsibleId}" não encontrado.`);
-        }
-    }
+      await transactionalEntityManager.save(project);
 
-    const newTestCase = this.testCasesRepository.create({
-      ...testCaseData,
-      project,
-      createdBy,
-      responsible,
+      const createdBy = await transactionalEntityManager.findOneBy(User, { id: createdById });
+      if (!createdBy) throw new NotFoundException(`Usuário criador com ID "${createdById}" não encontrado.`);
+      
+      let responsible: User | null = null;
+      if (responsibleId) {
+        responsible = await transactionalEntityManager.findOneBy(User, { id: responsibleId });
+      }
+      
+      const newTestCase = transactionalEntityManager.create(TestCase, {
+        ...testCaseData,
+        project,
+        createdBy,
+        responsible,
+        projectSequenceId: newSequenceId,
+      });
+
+      return transactionalEntityManager.save(newTestCase);
     });
-
-    return this.testCasesRepository.save(newTestCase);
   }
 
   findAll(): Promise<TestCase[]> {
@@ -61,9 +66,9 @@ export class TestCasesService {
           id: projectId,
         },
       },
+      relations: ['project', 'createdBy', 'responsible'],
     });
   }
-
   async findOne(id: string): Promise<TestCase | null> {
     return this.testCasesRepository.findOne({ where: { id } });
   }
