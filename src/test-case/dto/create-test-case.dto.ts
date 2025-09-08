@@ -12,7 +12,7 @@ export class CreateTestCaseDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ description: 'Tipo do teste', enum: TestType, example: TestType.FUNCTIONAL })
+  @ApiProperty({ description: 'Tipo do teste', enum: TestType, example: TestType.FUNCIONAL })
   @IsEnum(TestType)
   testType: TestType;
 

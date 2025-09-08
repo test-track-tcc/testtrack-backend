@@ -32,7 +32,7 @@ export class TestCase {
   @ApiProperty({
     description: 'Tipo do teste',
     enum: TestType,
-    example: TestType.FUNCTIONAL,
+    example: TestType.FUNCIONAL,
   })
   @Column({ type: 'enum', enum: TestType, default: TestType.MANUAL })
   testType: TestType;
