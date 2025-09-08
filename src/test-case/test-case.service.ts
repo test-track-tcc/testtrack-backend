@@ -5,21 +5,63 @@ import { TestCase } from './entities/test-case.entity';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseDto } from './dto/update-test-case.dto';
 import { TestCaseStatus } from '../config/enums';
+import { Project } from 'src/projects/entities/project.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class TestCasesService {
   constructor(
     @InjectRepository(TestCase)
     private testCasesRepository: Repository<TestCase>,
+    @InjectRepository(Project)
+    private projectRepository: Repository<Project>,
+    @InjectRepository(User) 
+    private userRepository: Repository<User>, 
   ) {}
 
   async create(createTestCaseDto: CreateTestCaseDto): Promise<TestCase> {
-    const newTestCase = this.testCasesRepository.create(createTestCaseDto);
+    const { projectId, createdById, responsibleId, ...testCaseData } = createTestCaseDto;
+
+    const project = await this.projectRepository.findOneBy({ id: projectId });
+    if (!project) {
+      throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado.`);
+    }
+
+    const createdBy = await this.userRepository.findOneBy({ id: createdById });
+    if (!createdBy) {
+        throw new NotFoundException(`Usuário criador com ID "${createdById}" não encontrado.`);
+    }
+
+    let responsible: User | null = null;
+    if (responsibleId) {
+        responsible = await this.userRepository.findOneBy({ id: responsibleId });
+        if (!responsible) {
+            throw new NotFoundException(`Usuário responsável com ID "${responsibleId}" não encontrado.`);
+        }
+    }
+
+    const newTestCase = this.testCasesRepository.create({
+      ...testCaseData,
+      project,
+      createdBy,
+      responsible,
+    });
+
     return this.testCasesRepository.save(newTestCase);
   }
 
   findAll(): Promise<TestCase[]> {
     return this.testCasesRepository.find();
+  }
+
+  async findAllByProject(projectId: string): Promise<TestCase[]> {
+    return this.testCasesRepository.find({
+      where: {
+        project: {
+          id: projectId,
+        },
+      },
+    });
   }
 
   async findOne(id: string): Promise<TestCase | null> {

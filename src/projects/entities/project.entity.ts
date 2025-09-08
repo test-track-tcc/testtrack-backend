@@ -5,6 +5,7 @@ import { Organization } from 'src/organization/entities/organization.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProjectUser } from './project-user.entity';
 import { projectStatus } from 'src/enum/projectStatus';
+import { TestCase } from 'src/test-case/entities/test-case.entity';
 
 @Entity('projects')
 export class Project {
@@ -42,6 +43,10 @@ export class Project {
   @ApiProperty({ description: 'Data de conclusão do projeto', example: '2025-12-15' })
   @Column({ type: 'date', nullable: true })
   conclusionDate: Date;
+
+  @ApiProperty({ type: () => [TestCase], description: 'Lista de casos de teste associados ao projeto' })
+  @OneToMany(() => TestCase, testCase => testCase.project)
+  testCases: TestCase[];
 
   @ApiProperty({
     description: 'Status atual do projeto',

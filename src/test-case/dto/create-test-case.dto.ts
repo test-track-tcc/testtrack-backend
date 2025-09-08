@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsUUID, IsOptional, IsBoolean, IsArray, ArrayMaxSize } from 'class-validator';
+import { IsString, IsEnum, IsUUID, IsOptional, IsBoolean, IsArray, ArrayMaxSize, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus } from '../../config/enums';
 import { UsersController } from '../../users/users.controller';
@@ -20,14 +20,15 @@ export class CreateTestCaseDto {
   @IsEnum(Priority)
   priority: Priority;
 
-  @ApiProperty({ description: 'ID do usuário que está criando o caso de teste', example: 'f0e9d8c7-b6a5-4321-fedc-ba9876543210' })
+  @ApiProperty({ description: 'ID do usuário que está criando o caso de teste' })
   @IsUUID()
-  idCreatedBy: string;
+  @IsNotEmpty()
+  createdById: string;
 
-  @ApiProperty({ description: 'ID do usuário responsável pelo caso de teste', example: '12345678-90ab-cdef-1234-567890abcdef12', required: false })
-  @IsOptional()
+  @ApiProperty({ description: 'ID do usuário responsável', required: false })
   @IsUUID()
-  idResponsible?: string;
+  @IsOptional()
+  responsibleId?: string;
 
   @ApiProperty({ description: 'Tempo estimado para execução (ex: "1h30m")', example: '1h30m', required: false })
   @IsOptional()
@@ -51,6 +52,11 @@ export class CreateTestCaseDto {
   @IsOptional()
   @IsEnum(TestCaseStatus)
   status?: TestCaseStatus;
+
+  @ApiProperty({ description: 'ID do projeto ao qual o caso de teste pertence' })
+  @IsUUID()
+  @IsNotEmpty()
+  projectId: string;
 
   @ApiProperty({
     description: 'Lista de comentários no formato {idUsuario, comentario, data}',

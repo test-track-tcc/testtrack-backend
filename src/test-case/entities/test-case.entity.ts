@@ -1,7 +1,9 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus } from '../../config/enums';
+import { Project } from 'src/projects/entities/project.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Entity('test_cases')
 export class TestCase {
@@ -43,19 +45,19 @@ export class TestCase {
   @Column({ type: 'enum', enum: Priority, default: Priority.MEDIUM })
   priority: Priority;
 
-  @ApiProperty({
-    description: 'ID do usuário que criou o caso de teste (UUID)',
-    example: 'f0e9d8c7-b6a5-4321-fedc-ba9876543210',
-  })
-  @Column('uuid')
-  idCreatedBy: string;
+  @ApiProperty({ type: () => User, description: 'Usuário que criou o caso de teste' })
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'createdById' })
+  createdBy: User;
 
-  @ApiProperty({
-    description: 'ID do usuário responsável pelo caso de teste (UUID)',
-    example: '12345678-90ab-cdef-1234-567890abcdef12',
-  })
-  @Column('uuid', { nullable: true })
-  idResponsible: string;
+  @ApiProperty({ type: () => User, description: 'Usuário responsável pelo caso de teste' })
+  @ManyToOne(() => User, { nullable: true, eager: true })
+  @JoinColumn({ name: 'responsibleId' })
+  responsible: User | null;
+
+  @ApiProperty({ type: () => Project, description: 'Projeto ao qual o caso de teste pertence' })
+  @ManyToOne(() => Project, project => project.testCases, { onDelete: 'CASCADE' })
+  project: Project;
 
   @ApiProperty({
     description:
