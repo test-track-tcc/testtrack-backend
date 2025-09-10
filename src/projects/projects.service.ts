@@ -32,9 +32,9 @@ export class ProjectsService {
   ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
-    const { name, description, organizationId, ownerId } = createProjectDto;
+    const { organizationId, ownerId, ...restOfDto } = createProjectDto;
 
-    const prefix = generatePrefix(name);
+    const prefix = generatePrefix(createProjectDto.name);
 
     const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
     if (!organization) {
@@ -46,9 +46,9 @@ export class ProjectsService {
       throw new NotFoundException(`User with ID "${ownerId}" not found`);
     }
 
+    // CORREÇÃO: Passe todos os dados do DTO (incluindo status e datas) para o método create
     const project = this.projectsRepository.create({
-      name,
-      description,
+      ...restOfDto, // Isto inclui name, description, status, startDate, estimateDate, etc.
       organization,
       owner,
       prefix,
