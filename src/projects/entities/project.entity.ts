@@ -42,10 +42,10 @@ export class Project {
 
   @ApiProperty({ description: 'Data de conclusão do projeto', example: '2025-12-15' })
   @Column({ type: 'date', nullable: true })
-  conclusionDate: Date;
+  conclusionDate: Date | null;
 
   @ApiProperty({ description: 'Prefixo para IDs de casos de teste', example: 'TT' })
-  @Column({ length: 10, unique: true })
+  @Column({ length: 10, unique: false })
   prefix: string;
 
   @Column({ type: 'int', default: 0 })

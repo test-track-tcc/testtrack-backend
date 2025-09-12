@@ -48,6 +48,11 @@ export class ProjectsController {
     return this.projectsService.remove(id);
   }
 
+  @Get(':id/users')
+  findUsersByProject(@Param('id') id: string) {
+    return this.projectsService.findUsersByProject(id);
+  }
+
   @Post(':projectId/users')
   @ApiOperation({ summary: 'Adiciona um usuário a um projeto específico' })
   addUserToProject(
