@@ -61,4 +61,13 @@ export class ProjectsController {
   ) {
     return this.projectsService.addUserToProject(projectId, addUserToProjectDto);
   }
+
+  @Delete(':projectId/users/:userId')
+  @ApiOperation({ summary: 'Remove um utilizador de um projeto específico' })
+  removeUserFromProject(
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
+    return this.projectsService.removeUserFromProject(projectId, userId);
+  }
 }
