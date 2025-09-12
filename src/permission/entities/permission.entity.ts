@@ -15,6 +15,7 @@ import { User } from '../../users/entities/user.entity';
 import { AccessGroup } from '../../access-group/entities/access-group.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsUUID } from 'class-validator';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Entity({ name: 'permission' })
 export class Permission {
@@ -52,14 +53,14 @@ export class Permission {
   updatedAt: Date;
 
 
-  @ApiProperty({ description: 'ID do projeto da organização associado', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef', required: true })
-  //@OneToOne(() => Project, (project) => project.permissions, {
-  //  nullable: false,
-  //  onDelete: 'CASCADE',
-  //})
-  @IsUUID()
-  @IsNotEmpty({ message: 'O ID do projeto associado não pode estar vazio.' })
-  projetoId: string;
+  // relação OneToOne com Project (uma permissão pertence a um projeto)
+  @ApiProperty({ description: 'Projeto relacionado a permissão.', type: () => Project })
+  @OneToOne(() => Project, (project) => project.permission, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @IsNotEmpty({ message: 'O projeto associado não pode estar vazio.' })
+  project: Project;
 
   
   // se Permission pertence a AccessGroup (ManyToMany)

@@ -55,7 +55,9 @@ export class AccessGroup {
 
 
   // Grupos de acessos podem ter várias permissões
-  @ManyToMany(() => Permission, p => p.accessGroups)
+  @ManyToMany(() => Permission, p => p.accessGroups, {
+    onDelete: 'CASCADE',
+  })
   @JoinTable()
   permissions: Permission[];
 

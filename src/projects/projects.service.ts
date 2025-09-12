@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -8,6 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
+import { Permission } from 'src/permission/entities/permission.entity';
 
 @Injectable()
 export class ProjectsService {
@@ -20,9 +21,19 @@ export class ProjectsService {
     private organizationsRepository: Repository<Organization>,
     @InjectRepository(ProjectUser)
     private projectUsersRepository: Repository<ProjectUser>,
+    @InjectRepository(Permission)
+    private permissionRepo: Repository<Permission>,
+    // DataSource para controlar a transação que criei para salvar a permissão quando o projeto é criado. [Lembrar de desfazer se der erro]
+    private readonly dataSource: DataSource,
   ) {}
 
+
+
+
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
+    // O uso do dataSource.transaction garante que tudo abaixo seja tudo feito, ou nada feito.
+    // O dataSource vai receber um entityManager que será usado dentro da transação.
+
     const { name, description, organizationId, ownerId } = createProjectDto;
 
     const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
@@ -35,24 +46,85 @@ export class ProjectsService {
       throw new NotFoundException(`User with ID "${ownerId}" not found`);
     }
 
-    const project = this.projectsRepository.create({
-      name,
-      description,
-      organization,
-      owner,
+
+    
+    return this.dataSource.transaction(async (entityManager) => {
+      // Como o projeto depende da permissão, a permissão deve ser criada antes e com base 
+      // nas informações passadas pelo usuário criador do projeto.
+      const permissionName = `Acesso - Projeto ${name}`;
+      const newPermission = entityManager.create(Permission, {
+        name: permissionName,
+        description: `Permissão de acesso para o projeto ${name}.`,
+        createdBy: owner,
+      });
+      const savedPermission = await entityManager.save(newPermission);
+
+      // Após criar e salvar a nova permissão, deve ser criado o projeto associado.
+      const newProject = entityManager.create(Project, {
+        name: name,
+        description: description,
+        organization: organization,
+        owner: owner,
+        permission: savedPermission, // Link da permissão criada no projeto
+      });
+
+      const savedProject = await entityManager.save(newProject);
+
+      // Atualizando a permissão com o projeto por se tratar de OneToOne bidirecional
+      // (embora o cascade muitas vezes cuide disso)
+      savedPermission.project = savedProject;
+      await entityManager.save(savedPermission);
+      
+      // Dono como ADMIN do projeto.
+      const projectUser = entityManager.create(ProjectUser, {
+        project: savedProject,
+        user: owner,
+        role: ProjectRole.ADMIN,
+      });
+
+      const savedProjectUser = await entityManager.save(projectUser);
+
+      // Se não houve erros, a transação fará COMMIT.
+      // Se qualquer 'save' falhar, a transação fará o ROLLBACK.
+      return savedProject;
     });
-
-    const savedProject = await this.projectsRepository.save(project);
-
-    const projectUser = this.projectUsersRepository.create({
-      project: savedProject,
-      user: owner,
-      role: ProjectRole.ADMIN,
-    });
-    await this.projectUsersRepository.save(projectUser);
-
-    return savedProject;
   }
+
+
+// Mantive o seu no código porque pode ser útil para comparar depois e garantir que o meu não dá erros.
+
+
+//  async createDoDiogo(createProjectDto: CreateProjectDto): Promise<Project> {
+//    const { name, description, organizationId, ownerId } = createProjectDto;
+//
+//    const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
+//    if (!organization) {
+//      throw new NotFoundException(`Organization with ID "${organizationId}" not found`);
+//    }
+//
+//    const owner = await this.usersRepository.findOne({ where: { id: ownerId } });
+//    if (!owner) {
+//      throw new NotFoundException(`User with ID "${ownerId}" not found`);
+//    }
+//
+//    const project = this.projectsRepository.create({
+//      name,
+//      description,
+//      organization,
+//      owner,
+//    });
+//
+//    const savedProject = await this.projectsRepository.save(project);
+//
+//    const projectUser = this.projectUsersRepository.create({
+//      project: savedProject,
+//      user: owner,
+//      role: ProjectRole.ADMIN,
+//    });
+//    await this.projectUsersRepository.save(projectUser);
+//
+//    return savedProject;
+//  }
 
   findAll(): Promise<Project[]> {
     return this.projectsRepository.find({ relations: ['organization', 'owner'] });
