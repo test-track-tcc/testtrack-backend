@@ -1,9 +1,10 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus } from '../../config/enums';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Script } from './script.entity';
 
 @Entity('test_cases')
 export class TestCase {
@@ -128,14 +129,14 @@ export class TestCase {
   attachment: string[];
 
   @ApiProperty({
-    description:
-      'Scripts relacionados ao caso de teste (ex: scripts de automação)',
-    type: 'string',
-    isArray: true,
-    example: ['console.log("script de automacao");'],
+    description: 'Scripts relacionados ao caso de teste',
+    type: () => [Script],
   })
-  @Column('json', { nullable: true })
-  scripts: string[];
+  @OneToMany(() => Script, (script) => script.testCase, {
+    cascade: true,
+    eager: true,
+  })
+  scripts: Script[];
 
   @ApiProperty({
     description: 'Data e hora de criação do caso de teste',
