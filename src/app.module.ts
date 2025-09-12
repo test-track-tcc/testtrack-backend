@@ -8,6 +8,8 @@ import { AppService } from './app.service';
 import { OrganizationModule } from './organization/organization.module';
 import { AuthModule } from './auth/auth.module';
 import { ProjectsModule } from './projects/projects.module';
+import { PermissionModule } from './permission/permission.module';
+import { AccessGroupModule } from './access-group/access-group.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { ProjectsModule } from './projects/projects.module';
     OrganizationModule,
     AuthModule,
     ProjectsModule,
+    PermissionModule,
+    AccessGroupModule
   ],
   controllers: [AppController],
   providers: [AppService],

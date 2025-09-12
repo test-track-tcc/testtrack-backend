@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { Organization } from 'src/organization/entities/organization.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Organization)
+    private orgRepo: Repository<Organization>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -63,4 +66,12 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     await this.usersRepository.delete(id);
   }
+
+  async findUserOrganizationsFind(userId: string): Promise<Organization[]> {
+  return this.orgRepo.find({
+      where: { users: { id: userId } },
+      relations: [] 
+    });
+  }
+
 }
