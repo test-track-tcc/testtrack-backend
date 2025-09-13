@@ -69,7 +69,7 @@ export class UsersService {
 
   async findUserOrganizationsFind(userId: string): Promise<Organization[]> {
   return this.orgRepo.find({
-      where: { users: { id: userId } },
+      where: { organizationUsers: { id: userId } },
       relations: [] 
     });
   }

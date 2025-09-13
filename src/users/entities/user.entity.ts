@@ -29,7 +29,7 @@ export class User {
   active: boolean;
 
   @ApiProperty({ type: () => [Organization], description: 'Lista de organizações as quais o usuário pertence' })
-  @ManyToMany(() => Organization, organization => organization.users)
+  @ManyToMany(() => Organization, organization => organization.organizationUsers)
   organizations: Organization[];
 
   @ApiProperty({ type: () => [Organization], description: 'Lista de projetos as quais o usuário pertence' })

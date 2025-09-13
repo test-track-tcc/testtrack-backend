@@ -29,13 +29,12 @@ export class TestCase {
 
   @ApiProperty({ description: 'Custom type of the test', type: () => CustomTestType })
   @ManyToOne(() => CustomTestType, (type) => type.testCases, {
-    nullable: false, // Um caso de teste DEVE ter um tipo
+    nullable: true, // Um caso de teste DEVE ter um tipo
     eager: true,     // Carrega o tipo automaticamente ao buscar um TestCase
     onDelete: 'RESTRICT', // Impede a exclusão de um tipo que está em uso
   })
   @JoinColumn({ name: 'customTestTypeId' })
   customTestType: CustomTestType;
-
 
 
   @ApiProperty({ description: 'Priority of the test case', enum: Priority })
