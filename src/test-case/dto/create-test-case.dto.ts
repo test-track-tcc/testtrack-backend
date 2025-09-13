@@ -1,4 +1,5 @@
 import { IsString, IsEnum, IsUUID, IsOptional, IsArray, IsNotEmpty } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus } from '../../config/enums';
 
@@ -15,6 +16,11 @@ export class CreateTestCaseDto {
   @ApiProperty({ description: 'Type of the test', enum: TestType, example: TestType.FUNCIONAL })
   @IsEnum(TestType)
   testType: TestType;
+
+  @ApiPropertyOptional({ description: 'ID do tipo de teste personalizado' })
+  @IsOptional()
+  @IsUUID()
+  customTestTypeId?: string;
 
   @ApiProperty({ description: 'Priority of the test case', enum: Priority, example: Priority.HIGH })
   @IsEnum(Priority)

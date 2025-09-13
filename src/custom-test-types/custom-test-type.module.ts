@@ -3,10 +3,10 @@ import { CustomTestTypesService } from './custom-test-type.service';
 import { CustomTestTypesController } from './custom-test-type.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomTestType } from './entities/custom-test-type.entity';
-import { Project } from 'src/projects/entities/project.entity';
+import { Organization } from 'src/organization/entities/organization.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CustomTestType, Project])],
+  imports: [TypeOrmModule.forFeature([CustomTestType, Organization])],
   controllers: [CustomTestTypesController],
   providers: [CustomTestTypesService],
 })

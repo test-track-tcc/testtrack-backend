@@ -1,4 +1,4 @@
-import { Project } from 'src/projects/entities/project.entity';
+import { Organization } from 'src/organization/entities/organization.entity';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
 import {
   Column,
@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 
 @Entity('custom_test_types')
-@Unique(['name', 'project']) // Garante que o nome seja único por projeto
+@Unique(['name', 'organization']) // Garante que o nome seja único por projeto
 export class CustomTestType {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -24,11 +24,11 @@ export class CustomTestType {
   description: string;
 
 
-  @ManyToOne(() => Project, (project) => project.customTestTypes, {
+  @ManyToOne(() => Organization, (organization) => organization.customTestTypes, {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  project: Project;
+  organization: Organization;
 
 
   @OneToMany(() => TestCase, (testCase) => testCase.customTestType)

@@ -7,6 +7,7 @@ import { UpdateTestCaseDto } from './dto/update-test-case.dto';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Script } from './entities/script.entity';
+import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 
 @Injectable()
 export class TestCasesService {
@@ -14,6 +15,8 @@ export class TestCasesService {
     private dataSource: DataSource,
     @InjectRepository(TestCase)
     private testCasesRepository: Repository<TestCase>,
+    @InjectRepository(CustomTestType)
+    private customTestTypeRepository: Repository<CustomTestType>,
   ) {}
 
   async create(createTestCaseDto: CreateTestCaseDto): Promise<TestCase> {
@@ -22,6 +25,7 @@ export class TestCasesService {
         projectId,
         createdById,
         responsibleId,
+        customTestTypeId,
         scripts: scriptPaths,
         ...testCaseData
       } = createTestCaseDto;
@@ -29,6 +33,7 @@ export class TestCasesService {
       const project = await transactionalEntityManager.findOne(Project, { where: { id: projectId } });
       if (!project) throw new NotFoundException(`Project with ID "${projectId}" not found.`);
 
+      // Incrementa a sequência do projeto
       project.testCaseSequence = (project.testCaseSequence || 0) + 1;
       const newSequenceId = project.testCaseSequence;
       await transactionalEntityManager.save(project);
@@ -42,6 +47,7 @@ export class TestCasesService {
         if (!responsible) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
       }
 
+      // 1. Cria a instância da entidade TestCase com os dados básicos
       const newTestCase = transactionalEntityManager.create(TestCase, {
         ...testCaseData,
         project,
@@ -50,6 +56,18 @@ export class TestCasesService {
         projectSequenceId: newSequenceId,
       });
 
+      // 2. Se um tipo customizado for fornecido, busca e o anexa à instância
+      if (customTestTypeId) {
+        const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
+        if (!customTestType) {
+          throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
+        }
+        // Atribui a relação e anula o tipo padrão
+        newTestCase.customTestType = customTestType;
+        newTestCase.testType = null; 
+      }
+
+      // 3. Salva a entidade agora completa
       const savedTestCase = await transactionalEntityManager.save(newTestCase);
       
       const validScriptPaths = scriptPaths?.filter(path => typeof path === 'string' && path.length > 0);
@@ -89,14 +107,25 @@ export class TestCasesService {
   }
 
   async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
-    const { scripts, ...restDto } = updateTestCaseDto;
-    const testCase = await this.testCasesRepository.preload({
-        id: id,
-        ...restDto,
-    });
+    const { scripts, customTestTypeId, ...restDto } = updateTestCaseDto;
+
+    const testCase = await this.testCasesRepository.findOneBy({ id });
     if (!testCase) {
-      throw new NotFoundException(`Test case with ID "${id}" not found.`);
+        throw new NotFoundException(`Test case with ID "${id}" not found.`);
     }
+    Object.assign(testCase, restDto);
+
+    if (customTestTypeId) {
+        const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
+        if (!customTestType) {
+            throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
+        }
+        testCase.customTestType = customTestType;
+        testCase.testType = null;
+    } else if (restDto.testType) {
+        testCase.customTestType = null;
+    }
+    
     return this.testCasesRepository.save(testCase);
   }
 

@@ -1,37 +1,27 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
 import { CustomTestTypesService } from './custom-test-type.service';
 import { CreateCustomTestTypeDto } from './dto/create-custom-test-type.dto';
 import { UpdateCustomTestTypeDto } from './dto/update-custom-test-type.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Custom Test Types')
-@Controller('projects/:projectId/custom-test-types')
+@Controller('organization/:organizationId/custom-test-types')
 export class CustomTestTypesController {
   constructor(private readonly customTestTypesService: CustomTestTypesService) {}
   
   @Post()
-  @ApiOperation({ summary: 'Create a new custom test type for a project' })
-  @ApiResponse({ status: 201, description: 'The test type has been successfully created.'})
+  @ApiOperation({ summary: 'Create a new custom test type for an organization' })
   create(
-    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('organizationId', ParseUUIDPipe) organizationId: string,
     @Body() createDto: CreateCustomTestTypeDto,
   ) {
-    return this.customTestTypesService.create(projectId, createDto);
+    return this.customTestTypesService.create(organizationId, createDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all custom test types for a project' })
-  findAll(@Param('projectId', ParseUUIDPipe) projectId: string) {
-    return this.customTestTypesService.findAllByProject(projectId);
+  @ApiOperation({ summary: 'List all custom test types for an organization' })
+  findAll(@Param('organizationId', ParseUUIDPipe) organizationId: string) {
+    return this.customTestTypesService.findAllByOrganization(organizationId);
   }
 
   @Get(':typeId')
@@ -51,7 +41,6 @@ export class CustomTestTypesController {
 
   @Delete(':typeId')
   @ApiOperation({ summary: 'Delete a custom test type' })
-  @ApiResponse({ status: 204, description: 'The test type has been successfully deleted.'})
   remove(@Param('typeId', ParseUUIDPipe) typeId: string) {
     return this.customTestTypesService.remove(typeId);
   }

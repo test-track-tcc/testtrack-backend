@@ -21,20 +21,21 @@ export class TestCase {
   @Column('text')
   description: string;
 
-  @ApiProperty({ description: 'Type of the test', enum: TestType })
-  @Column({ type: 'enum', enum: TestType, default: TestType.MANUAL })
-  testType: TestType;
-
-
+  @Column({
+    type: 'enum',
+    enum: TestType,
+    nullable: true,
+  })
+  testType: TestType | null;
 
   @ApiProperty({ description: 'Custom type of the test', type: () => CustomTestType })
   @ManyToOne(() => CustomTestType, (type) => type.testCases, {
-    nullable: true, // Um caso de teste DEVE ter um tipo
-    eager: true,     // Carrega o tipo automaticamente ao buscar um TestCase
-    onDelete: 'RESTRICT', // Impede a exclusão de um tipo que está em uso
+    nullable: true,
+    eager: true,
+    onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'customTestTypeId' })
-  customTestType: CustomTestType;
+  customTestType: CustomTestType | null;
 
 
   @ApiProperty({ description: 'Priority of the test case', enum: Priority })

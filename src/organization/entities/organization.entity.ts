@@ -5,6 +5,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { IsUUID } from 'class-validator';
 import { AccessGroup } from 'src/access-group/entities/access-group.entity';
 import { OrganizationUser } from './organization-user.entity';
+import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 
 @Entity()
 export class Organization {
@@ -45,4 +46,7 @@ export class Organization {
   @ApiProperty({ type: () => [AccessGroup], description: 'Lista de grupos de acessos que pertencem à organização' })
   @OneToMany(() => AccessGroup, group => group.organization)
   accessGroups: AccessGroup[];
+
+  @OneToMany(() => CustomTestType, (type) => type.organization)
+  customTestTypes: CustomTestType[];
 }
