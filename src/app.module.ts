@@ -14,6 +14,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { AuthModule } from './auth/auth.module';
 import { PermissionModule } from './permission/permission.module';
 import { AccessGroupModule } from './access-group/access-group.module';
+import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
 
 @Module({
   imports: [
@@ -54,7 +55,8 @@ import { AccessGroupModule } from './access-group/access-group.module';
     OrganizationModule,
     AuthModule,
     PermissionModule,
-    AccessGroupModule
+    AccessGroupModule,
+    CustomTestTypesModule
   ],
   controllers: [AppController],
   providers: [AppService],
