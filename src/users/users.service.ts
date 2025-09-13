@@ -67,11 +67,19 @@ export class UsersService {
     await this.usersRepository.delete(id);
   }
 
-  async findUserOrganizationsFind(userId: string): Promise<Organization[]> {
-  return this.orgRepo.find({
-      where: { users: { id: userId } },
-      relations: [] 
+    async findOrganizations(userId: string): Promise<Organization[]> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: {
+        organizations: true
+      },
     });
+
+    if (!user) {
+      throw new BadRequestException(`User with ID "${userId}" not found.`);
+    }
+
+    return user.organizations;
   }
 
 }
