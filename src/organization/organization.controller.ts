@@ -39,6 +39,11 @@ export class OrganizationController {
     return this.organizationService.findByUserId(userId);
   }
 
+  @Get('/findAllGroupAccess/:id')
+  findAllGroupAccess(@Param('id') orgId: string) {
+    return this.organizationService.findAllGroupAccess(orgId);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrganizationDto: UpdateOrganizationDto) {
     return this.organizationService.update(id, updateOrganizationDto);

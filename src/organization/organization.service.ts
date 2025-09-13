@@ -113,8 +113,21 @@ export class OrganizationService {
     return createOrganizationDto;
   }
 
-  async findAll() {
-    // Retorna uma lista de organizações e o nome, email e id do admin associado.
+    async findAll() {
+      // Retorna uma lista de organizações e o nome, email e id do admin associado.
+      return this.organizationRepository.find({
+        select: {
+          admin: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        relations: ['admin'],
+      });
+  }
+
+  async findAllGroupAccess(orgId: string) {
     return this.organizationRepository.find({
       select: {
         admin: {
@@ -122,10 +135,18 @@ export class OrganizationService {
           name: true,
           email: true,
         },
+        users: {
+          id: true,
+          name: true,
+          email: true,
+          active: true,
+          createdAt: true
+        }
       },
-      relations: ['admin'],
+      where: { id: orgId },
+      relations: ['admin', 'users', 'accessGroups', 'accessGroups.permissions'],
     });
-}
+  }
 
   async findOne(id: string) {
     let organizationFound = await this.organizationRepository.findOne({

@@ -23,7 +23,7 @@ export class AccessGroupService {
   // Retorna todos os grupos de acesso (de todas organizações).
   async findAll(): Promise<AccessGroup[]> {
     return this.groupsRepo.find({
-      relations: ['organization'],
+      relations: ['permissions', 'organization'],
       order: { name: 'ASC' },
     });
   }

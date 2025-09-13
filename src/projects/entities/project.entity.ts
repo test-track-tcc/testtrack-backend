@@ -1,10 +1,12 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn, OneToOne } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from 'src/users/entities/user.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProjectUser } from './project-user.entity';
 import { projectStatus } from 'src/enum/projectStatus';
+import { Permission } from 'src/permission/entities/permission.entity';
+import { IsNotEmpty } from 'class-validator';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
 
 @Entity('projects')
@@ -69,6 +71,17 @@ export class Project {
   @ApiProperty({ description: 'Data e hora da última atualização do projeto', example: '2025-06-09T22:00:00.000Z' })
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
+
+  @ApiProperty({ description: 'Permissão do projeto', type: () => Permission })
+  @OneToOne(() => Permission, (permission) => permission.project, {
+    nullable: false,
+    onDelete: 'CASCADE',
+    cascade: true
+  })
+  @IsNotEmpty({ message: 'O projeto associado não pode estar vazio.' })
+  @JoinColumn()
+  permission: Permission;
+  
 
   constructor() {
     if (!this.id) {
