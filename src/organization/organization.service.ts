@@ -68,6 +68,7 @@ export class OrganizationService {
     const newOrganization = this.organizationRepository.create({
       ...organizationData,
       admin: adminUser, // Agora estamos passando um objeto User, não User | null
+      users: [adminUser], // Adiciona o admin também como membro da organização
     });
 
     // 4. Salvamos a nova organização. O tipo de retorno agora está correto.
