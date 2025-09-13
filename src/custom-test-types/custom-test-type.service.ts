@@ -29,12 +29,14 @@ export class CustomTestTypesService {
     try {
       return await this.customTestTypeRepository.save(newType);
     } catch (error) {
+
       if (error.code === '23505') {
         throw new ConflictException(`A test type with name "${createDto.name}" already exists in this organization.`);
       }
       throw error;
     }
   }
+
 
   findAllByOrganization(organizationId: string): Promise<CustomTestType[]> {
     return this.customTestTypeRepository.find({

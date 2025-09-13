@@ -34,7 +34,8 @@ export class OrganizationService {
     // 1. Crie a organização base
     const newOrganization = this.organizationRepository.create({
       ...organizationData,
-      admin: adminUser,
+      admin: adminUser, // Agora estamos passando um objeto User, não User | null
+      users: [adminUser], // Adiciona o admin também como membro da organização
     });
 
     // 2. Salve a organização para obter um ID

@@ -1,4 +1,5 @@
 import { Organization } from 'src/organization/entities/organization.entity';
+
 import { TestCase } from 'src/test-case/entities/test-case.entity';
 import {
   Column,
@@ -13,6 +14,7 @@ import {
 
 @Entity('custom_test_types')
 @Unique(['name', 'organization']) // Garante que o nome seja único por projeto
+
 export class CustomTestType {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
+
 export class CreateCustomTestTypeDto {
   @ApiProperty({ example: 'Teste de Regressão Visual' })
   @IsString()

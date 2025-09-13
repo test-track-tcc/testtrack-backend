@@ -6,10 +6,13 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Custom Test Types')
 @Controller('organization/:organizationId/custom-test-types')
+
+
 export class CustomTestTypesController {
   constructor(private readonly customTestTypesService: CustomTestTypesService) {}
   
   @Post()
+
   @ApiOperation({ summary: 'Create a new custom test type for an organization' })
   create(
     @Param('organizationId', ParseUUIDPipe) organizationId: string,
@@ -41,6 +44,7 @@ export class CustomTestTypesController {
 
   @Delete(':typeId')
   @ApiOperation({ summary: 'Delete a custom test type' })
+  @ApiResponse({ status: 204, description: 'The test type has been successfully deleted.'})
   remove(@Param('typeId', ParseUUIDPipe) typeId: string) {
     return this.customTestTypesService.remove(typeId);
   }
