@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, NotFoundException, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { diskStorage } from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { TestCasesService } from './test-case.service';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseDto } from './dto/update-test-case.dto';
 import { TestCase } from './entities/test-case.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes } from '@nestjs/swagger';
+import { extname } from 'path';
 
 @ApiTags('test-cases')
 @Controller('test-cases')
@@ -14,11 +16,22 @@ export class TestCasesController {
   @Post()
   @ApiOperation({ summary: 'Create a new test case' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }]))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }], {
+    storage: diskStorage({
+      destination: './uploads/scripts',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = extname(file.originalname);
+        const filename = `${file.originalname.split('.')[0]}-${uniqueSuffix}${ext}`;
+        callback(null, filename);
+      },
+    }),
+  }))
   async create(
     @UploadedFiles() files: { scripts?: Express.Multer.File[] },
     @Body() createTestCaseDto: CreateTestCaseDto,
   ): Promise<TestCase> {
+    
     const fieldsToParse = ['comments', 'attachments'];
     for (const field of fieldsToParse) {
       if (createTestCaseDto[field] && typeof createTestCaseDto[field] === 'string') {
@@ -30,8 +43,9 @@ export class TestCasesController {
       }
     }
 
-    if (files.scripts) {
-      createTestCaseDto.scripts = files.scripts.map((file) => file.path);
+    if (files && files.scripts) {
+        const scriptPaths = files.scripts.map((file) => file.path);
+        createTestCaseDto.scripts = scriptPaths;
     }
     
     return this.testCasesService.create(createTestCaseDto);
@@ -82,7 +96,6 @@ export class TestCasesController {
     @UploadedFiles() files: { scripts?: Express.Multer.File[] },
     @Body() updateTestCaseDto: UpdateTestCaseDto,
   ): Promise<TestCase> {
-    // A lógica para parsear JSON e tratar arquivos fica no controller
     const fieldsToParse = ['comments', 'attachments'];
     for (const field of fieldsToParse) {
         if (updateTestCaseDto[field] && typeof updateTestCaseDto[field] === 'string') {
@@ -95,8 +108,7 @@ export class TestCasesController {
     }
     
     if (files.scripts) {
-        // Se precisar lidar com atualização de scripts, a lógica viria aqui
-        // Por exemplo: updateTestCaseDto.scripts = files.scripts.map(file => file.path);
+        // Lógica para lidar com atualização de scripts, se necessário
     }
 
     return this.testCasesService.update(id, updateTestCaseDto);

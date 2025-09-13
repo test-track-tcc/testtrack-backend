@@ -53,7 +53,7 @@ export class TestCasesService {
       const savedTestCase = await transactionalEntityManager.save(newTestCase);
       
       const validScriptPaths = scriptPaths?.filter(path => typeof path === 'string' && path.length > 0);
-
+      
       if (validScriptPaths && validScriptPaths.length > 0) {
         for (const scriptPath of validScriptPaths) {
           const newScript = transactionalEntityManager.create(Script, {
@@ -65,19 +65,14 @@ export class TestCasesService {
         }
       }
 
-      // --- A CORREÇÃO ESTÁ AQUI ---
-      // Após salvar tudo, buscamos o caso de teste novamente do banco de dados.
-      // Isso garante que a relação 'eager' com os scripts seja carregada corretamente.
       const result = await transactionalEntityManager.findOne(TestCase, {
           where: { id: savedTestCase.id },
       });
 
       if (!result) {
-        // Esta verificação é uma boa prática, embora seja improvável que falhe aqui.
         throw new NotFoundException('Failed to retrieve the test case after creation.');
       }
-
-      // Retornamos o resultado completo e atualizado.
+      
       return result;
     });
   }
@@ -94,7 +89,6 @@ export class TestCasesService {
   }
 
   async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
-    // Remove 'scripts' from updateTestCaseDto to avoid type mismatch
     const { scripts, ...restDto } = updateTestCaseDto;
     const testCase = await this.testCasesRepository.preload({
         id: id,
