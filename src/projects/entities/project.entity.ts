@@ -8,6 +8,7 @@ import { projectStatus } from 'src/enum/projectStatus';
 import { Permission } from 'src/permission/entities/permission.entity';
 import { IsNotEmpty } from 'class-validator';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
+import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 
 @Entity('projects')
 export class Project {
@@ -81,7 +82,12 @@ export class Project {
   @IsNotEmpty({ message: 'O projeto associado não pode estar vazio.' })
   @JoinColumn()
   permission: Permission;
-  
+
+
+
+  @OneToMany(() => CustomTestType, (customTestType) => customTestType.project)
+  customTestTypes: CustomTestType[];
+
 
   constructor() {
     if (!this.id) {

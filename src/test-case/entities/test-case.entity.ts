@@ -5,6 +5,7 @@ import { TestType, Priority, TestCaseStatus } from '../../config/enums';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Script } from './script.entity';
+import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 
 @Entity('test_cases')
 export class TestCase {
@@ -23,6 +24,19 @@ export class TestCase {
   @ApiProperty({ description: 'Type of the test', enum: TestType })
   @Column({ type: 'enum', enum: TestType, default: TestType.MANUAL })
   testType: TestType;
+
+
+
+  @ApiProperty({ description: 'Custom type of the test', type: () => CustomTestType })
+  @ManyToOne(() => CustomTestType, (type) => type.testCases, {
+    nullable: false, // Um caso de teste DEVE ter um tipo
+    eager: true,     // Carrega o tipo automaticamente ao buscar um TestCase
+    onDelete: 'RESTRICT', // Impede a exclusão de um tipo que está em uso
+  })
+  @JoinColumn({ name: 'customTestTypeId' })
+  customTestType: CustomTestType;
+
+
 
   @ApiProperty({ description: 'Priority of the test case', enum: Priority })
   @Column({ type: 'enum', enum: Priority, default: Priority.MEDIUM })
