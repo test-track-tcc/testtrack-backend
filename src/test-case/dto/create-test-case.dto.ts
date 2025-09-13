@@ -1,81 +1,75 @@
-import { IsString, IsEnum, IsUUID, IsOptional, IsBoolean, IsArray, ArrayMaxSize, IsNotEmpty } from 'class-validator';
+import { IsString, IsEnum, IsUUID, IsOptional, IsArray, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus } from '../../config/enums';
-import { UsersController } from '../../users/users.controller';
 
 export class CreateTestCaseDto {
-  @ApiProperty({ description: 'Título do caso de teste', example: 'Validar funcionalidade X' })
+  @ApiProperty({ description: 'Title of the test case', example: 'Validate feature X' })
   @IsString()
+  @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ description: 'Descrição detalhada do caso de teste', example: 'Descrição completa dos passos e contexto.' })
+  @ApiProperty({ description: 'Detailed description of the test case', example: 'Complete description of steps and context.' })
   @IsString()
   description: string;
 
-  @ApiProperty({ description: 'Tipo do teste', enum: TestType, example: TestType.FUNCIONAL })
+  @ApiProperty({ description: 'Type of the test', enum: TestType, example: TestType.FUNCIONAL })
   @IsEnum(TestType)
   testType: TestType;
 
-  @ApiProperty({ description: 'Prioridade do caso de teste', enum: Priority, example: Priority.HIGH })
+  @ApiProperty({ description: 'Priority of the test case', enum: Priority, example: Priority.HIGH })
   @IsEnum(Priority)
   priority: Priority;
 
-  @ApiProperty({ description: 'ID do usuário que está criando o caso de teste' })
+  @ApiProperty({ description: 'ID of the user creating the test case' })
   @IsUUID()
   @IsNotEmpty()
   createdById: string;
 
-  @ApiProperty({ description: 'ID do usuário responsável', required: false })
-  @IsUUID()
-  @IsOptional()
-  responsibleId?: string;
-
-  @ApiProperty({ description: 'Tempo estimado para execução (ex: "1h30m")', example: '1h30m', required: false })
-  @IsOptional()
-  @IsString()
-  estimatedTime?: string;
-
-  @ApiProperty({ description: 'Passos detalhados para execução do teste', example: '1. Fazer A; 2. Fazer B; 3. Verificar C.' })
-  @IsString()
-  steps: string;
-
-  @ApiProperty({ description: 'Resultado esperado do teste', example: 'A funcionalidade X funciona conforme esperado.' })
-  @IsString()
-  expectedResult: string;
-
-  @ApiProperty({ description: 'ID ou descrição do requisito vinculado', example: 'REQ-005', required: false })
-  @IsOptional()
-  @IsString()
-  taskLink?: string;
-
-  @ApiProperty({ description: 'Status inicial do caso de teste', enum: TestCaseStatus, example: TestCaseStatus.PENDING, required: false, default: TestCaseStatus.PENDING })
-  @IsOptional()
-  @IsEnum(TestCaseStatus)
-  status?: TestCaseStatus;
-
-  @ApiProperty({ description: 'ID do projeto ao qual o caso de teste pertence' })
+  @ApiProperty({ description: 'ID of the project the test case belongs to' })
   @IsUUID()
   @IsNotEmpty()
   projectId: string;
 
-  @ApiProperty({
-    description: 'Lista de comentários no formato {idUsuario, comentario, data}',
-    type: Object,
-    isArray: true,
-    example: [{ idUsuario: 'uuid', comentario: 'Observação inicial', data: '2025-06-09T21:34:52.000Z' }],
-    required: false
-  })
+  @ApiProperty({ description: 'ID of the responsible user', required: false })
+  @IsUUID()
+  @IsOptional()
+  responsibleId?: string;
+
+  @ApiProperty({ description: 'Estimated time for execution (e.g., "1h30m")', required: false })
+  @IsOptional()
+  @IsString()
+  estimatedTime?: string;
+
+  @ApiProperty({ description: 'Detailed steps for test execution' })
+  @IsString()
+  steps: string;
+
+  @ApiProperty({ description: 'Expected result of the test' })
+  @IsString()
+  expectedResult: string;
+
+  @ApiProperty({ description: 'Linked requirement ID or description', required: false })
+  @IsOptional()
+  @IsString()
+  taskLink?: string;
+
+  @ApiProperty({ description: 'Initial status of the test case', enum: TestCaseStatus, default: TestCaseStatus.PENDING, required: false })
+  @IsOptional()
+  @IsEnum(TestCaseStatus)
+  status?: TestCaseStatus;
+
+  @ApiProperty({ description: 'Comments', type: Object, isArray: true, required: false })
   @IsOptional()
   @IsArray()
-  comments?: { idUser: string; comments: string; data: Date }[];
+  comments?: { idUser: string; comment: string; date: Date }[];
 
-  @ApiProperty({ description: 'URLs ou IDs de anexos', type: String, isArray: true, example: ['http://example.com/image.png'], required: false })
+  @ApiProperty({ description: 'Attachments (URLs or file IDs)', type: String, isArray: true, required: false })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   attachments?: string[];
 
-  @ApiProperty({ description: 'Scripts relacionados ao teste', type: 'string', isArray: true, example: ['console.log("automação");'], required: false })
+  @ApiProperty({ description: 'Test-related scripts', type: 'string', isArray: true, required: false })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

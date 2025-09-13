@@ -14,17 +14,17 @@ export class Script {
   id: string;
 
   @ApiProperty({
-    description: 'Caminho ou nome do arquivo de script',
+    description: 'Path or name of the script file',
     example: 'path/to/script.js',
   })
   @Column()
   scriptPath: string;
 
-  @ApiProperty({ description: 'Versão do script', example: 1 })
+  @ApiProperty({ description: 'Version of the script', example: 1 })
   @Column()
   version: number;
 
-  @ApiProperty({ description: 'Data de criação da versão do script' })
+  @ApiProperty({ description: 'Creation date of the script version' })
   @CreateDateColumn()
   createdAt: Date;
 

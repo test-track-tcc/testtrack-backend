@@ -8,104 +8,62 @@ import { Script } from './script.entity';
 
 @Entity('test_cases')
 export class TestCase {
-  @ApiProperty({
-    description: 'ID único do caso de teste (UUID)',
-    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-  })
+  @ApiProperty({ description: 'Unique ID of the test case (UUID)' })
   @PrimaryColumn('uuid')
   id: string;
 
-  @ApiProperty({
-    description: 'Título do caso de teste',
-    example: 'Validar login de usuário',
-  })
+  @ApiProperty({ description: 'Title of the test case' })
   @Column({ length: 255 })
   title: string;
 
-  @ApiProperty({
-    description: 'Descrição detalhada do caso de teste',
-    example:
-      'Verificar se o usuário consegue logar com credenciais válidas e inválidas.',
-  })
+  @ApiProperty({ description: 'Detailed description of the test case' })
   @Column('text')
   description: string;
 
-  @ApiProperty({
-    description: 'Tipo do teste',
-    enum: TestType,
-    example: TestType.FUNCIONAL,
-  })
+  @ApiProperty({ description: 'Type of the test', enum: TestType })
   @Column({ type: 'enum', enum: TestType, default: TestType.MANUAL })
   testType: TestType;
 
-  @ApiProperty({
-    description: 'Prioridade do caso de teste',
-    enum: Priority,
-    example: Priority.HIGH,
-  })
+  @ApiProperty({ description: 'Priority of the test case', enum: Priority })
   @Column({ type: 'enum', enum: Priority, default: Priority.MEDIUM })
   priority: Priority;
 
-  @ApiProperty({ type: () => User, description: 'Usuário que criou o caso de teste' })
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'createdById' })
   createdBy: User;
 
-  @ApiProperty({ type: () => User, description: 'Usuário responsável pelo caso de teste' })
   @ManyToOne(() => User, { nullable: true, eager: true })
   @JoinColumn({ name: 'responsibleId' })
   responsible: User | null;
 
-  @ApiProperty({ description: 'ID sequencial único dentro do projeto', example: 1 })
-  @Column({ type: 'int' })
-  projectSequenceId: number;
-
   @ManyToOne(() => Project, project => project.testCases, { onDelete: 'CASCADE' })
   project: Project;
 
-  @ApiProperty({
-    description:
-      'Tempo estimado para execução do teste (formato livre, ex: "2h", "30min")',
-    example: '1h30m',
-  })
-  @Column({ length: 50, nullable: true })
-  timeEstimated: string;
+  @ApiProperty({ description: 'Unique sequential ID within the project' })
+  @Column({ type: 'int' })
+  projectSequenceId: number;
 
-  @ApiProperty({
-    description:
-      'Tempo gasto na execução do teste (formato livre, ex: "2h", "30min")',
-    example: '1h45m',
-  })
+  @ApiProperty({ description: 'Estimated time for execution' })
+  @Column({ length: 50, nullable: true })
+  estimatedTime: string;
+
+  @ApiProperty({ description: 'Time spent on execution' })
   @Column({ length: 50, nullable: true, default: '0m' })
   timeSpent: string;
 
-  @ApiProperty({
-    description: 'Passos detalhados para execução do teste',
-    example:
-      '1. Acessar tela de login; 2. Inserir usuário e senha; 3. Clicar em Logar.',
-  })
+  @ApiProperty({ description: 'Execution steps' })
   @Column('text')
   steps: string;
 
-  @ApiProperty({
-    description: 'Resultado esperado do teste',
-    example: 'Usuário é redirecionado para a dashboard.',
-  })
+  @ApiProperty({ description: 'Expected result' })
   @Column('text')
   expectedResult: string;
 
-  @ApiProperty({
-    description: 'ID ou descrição do requisito vinculado',
-    example: 'REQ-001 - Login de Usuário',
-  })
+  @ApiProperty({ description: 'Linked requirement' })
   @Column({ length: 255, nullable: true })
   taskLink: string;
 
-  @ApiProperty({
-    description: 'Status atual do caso de teste',
-    enum: TestCaseStatus,
-    example: TestCaseStatus.PENDING,
-  })
+  @ApiProperty({ description: 'Current status', enum: TestCaseStatus })
   @Column({ type: 'enum', enum: TestCaseStatus, default: TestCaseStatus.PENDING })
   status: TestCaseStatus;
 
@@ -126,29 +84,14 @@ export class TestCase {
     example: ['url/anexo1.png', 'id_do_arquivo'],
   })
   @Column('json', { nullable: true })
-  attachment: string[];
+  attachments: string[];
 
-  @ApiProperty({
-    description: 'Scripts relacionados ao caso de teste',
-    type: () => [Script],
-  })
-  @OneToMany(() => Script, (script) => script.testCase, {
-    cascade: true,
-    eager: true,
-  })
+  @OneToMany(() => Script, script => script.testCase, { cascade: true, eager: true })
   scripts: Script[];
 
-  @ApiProperty({
-    description: 'Data e hora de criação do caso de teste',
-    example: '2025-06-09T21:34:52.000Z',
-  })
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @ApiProperty({
-    description: 'Data e hora da última atualização do caso de teste',
-    example: '2025-06-09T22:00:00.000Z',
-  })
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
