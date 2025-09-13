@@ -3,9 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TestCasesService } from './test-case.service';
 import { TestCasesController } from './test-case.controller';
 import { TestCase } from './entities/test-case.entity';
+import { Script } from './entities/script.entity';
+import { Project } from 'src/projects/entities/project.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TestCase])],
+  imports: [TypeOrmModule.forFeature([TestCase, Script, Project, User])],
   providers: [TestCasesService],
   controllers: [TestCasesController],
 })

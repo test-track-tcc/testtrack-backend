@@ -18,11 +18,4 @@ export class ProjectUser {
 
   @ManyToOne(() => User, user => user.projectUsers, { onDelete: 'CASCADE' })
   user: User;
-
-  @Column({
-    type: 'enum',
-    enum: ProjectRole,
-    default: ProjectRole.MEMBER,
-  })
-  role: ProjectRole;
 }

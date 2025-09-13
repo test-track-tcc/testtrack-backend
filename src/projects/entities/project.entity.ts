@@ -7,6 +7,7 @@ import { ProjectUser } from './project-user.entity';
 import { projectStatus } from 'src/enum/projectStatus';
 import { Permission } from 'src/permission/entities/permission.entity';
 import { IsNotEmpty } from 'class-validator';
+import { TestCase } from 'src/test-case/entities/test-case.entity';
 
 @Entity('projects')
 export class Project {
@@ -43,7 +44,17 @@ export class Project {
 
   @ApiProperty({ description: 'Data de conclusão do projeto', example: '2025-12-15' })
   @Column({ type: 'date', nullable: true })
-  conclusionDate: Date;
+  conclusionDate: Date | null;
+
+  @ApiProperty({ description: 'Prefixo para IDs de casos de teste', example: 'TT' })
+  @Column({ length: 10, unique: false })
+  prefix: string;
+
+  @Column({ type: 'int', default: 0 })
+  testCaseSequence: number;
+
+  @OneToMany(() => TestCase, testCase => testCase.project)
+  testCases: TestCase[];
 
   @ApiProperty({
     description: 'Status atual do projeto',

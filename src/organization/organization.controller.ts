@@ -29,6 +29,11 @@ export class OrganizationController {
     return this.organizationService.findOne(id);
   }
 
+  @Get(':id/users')
+  findUsersByOrganization(@Param('id') id: string) {
+    return this.organizationService.findUsersByOrganization(id);
+  }
+
   @Get('/findByUserId/:userId')
   findByUserId(@Param('userId') userId: string) {
     return this.organizationService.findByUserId(userId);

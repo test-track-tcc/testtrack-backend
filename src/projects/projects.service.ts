@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
@@ -9,6 +13,15 @@ import { Organization } from 'src/organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
 import { Permission } from 'src/permission/entities/permission.entity';
+
+function generatePrefix(name: string): string {
+  return name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 10);
+}
 
 @Injectable()
 export class ProjectsService {
@@ -35,10 +48,16 @@ export class ProjectsService {
     // O dataSource vai receber um entityManager que será usado dentro da transação.
 
     const { name, description, organizationId, ownerId } = createProjectDto;
+    
+    const prefix = generatePrefix(createProjectDto.name);
 
-    const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
+    const organization = await this.organizationsRepository.findOne({
+      where: { id: organizationId },
+    });
     if (!organization) {
-      throw new NotFoundException(`Organization with ID "${organizationId}" not found`);
+      throw new NotFoundException(
+        `Organization with ID "${organizationId}" not found`,
+      );
     }
 
     const owner = await this.usersRepository.findOne({ where: { id: ownerId } });
@@ -65,7 +84,8 @@ export class ProjectsService {
         description: description,
         organization: organization,
         owner: owner,
-        permission: savedPermission, // Link da permissão criada no projeto
+        permission: savedPermission, 
+        prefix: prefix,
       });
 
       const savedProject = await entityManager.save(newProject);
@@ -127,7 +147,9 @@ export class ProjectsService {
 //  }
 
   findAll(): Promise<Project[]> {
-    return this.projectsRepository.find({ relations: ['organization', 'owner'] });
+    return this.projectsRepository.find({
+      relations: ['organization', 'owner'],
+    });
   }
 
   findAllByOrganization(organizationId: string): Promise<Project[]> {
@@ -137,40 +159,83 @@ export class ProjectsService {
           id: organizationId,
         },
       },
+      relations: ['organization', 'owner'], 
     });
   }
 
   async findOne(id: string): Promise<Project> {
-    const project = await this.projectsRepository.findOne({ where: { id }, relations: ['organization', 'owner'] });
+    const project = await this.projectsRepository.findOne({
+      where: { id },
+      relations: ['organization', 'owner'],
+    });
     if (!project) {
       throw new NotFoundException(`Project with ID "${id}" not found`);
     }
     return project;
   }
 
-  async update(id: string, updateProjectDto: UpdateProjectDto): Promise<Project> {
-    const project = await this.findOne(id);
+  async update(
+    id: string,
+    updateProjectDto: UpdateProjectDto,
+  ): Promise<Project> {
+    const project = await this.projectsRepository.preload({
+      id: id,
+      ...updateProjectDto,
+    });
 
-    const { name, description, organizationId, ownerId } = updateProjectDto;
+    if (!project) {
+      throw new NotFoundException(`Projeto com ID "${id}" não encontrado`);
+    }
 
-    if (name) project.name = name;
-    if (description) project.description = description;
-
-    if (organizationId) {
-      const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
+    if (updateProjectDto.organizationId) {
+      const organization = await this.organizationsRepository.findOne({
+        where: { id: updateProjectDto.organizationId },
+      });
       if (!organization) {
-        throw new NotFoundException(`Organization with ID "${organizationId}" not found`);
+        throw new NotFoundException(
+          `Organização com ID "${updateProjectDto.organizationId}" não encontrada`,
+        );
       }
       project.organization = organization;
     }
 
-    if (ownerId) {
-      const owner = await this.usersRepository.findOne({ where: { id: ownerId } });
+    if (updateProjectDto.ownerId) {
+      const owner = await this.usersRepository.findOne({
+        where: { id: updateProjectDto.ownerId },
+      });
       if (!owner) {
-        throw new NotFoundException(`User with ID "${ownerId}" not found`);
+        throw new NotFoundException(
+          `Usuário com ID "${updateProjectDto.ownerId}" não encontrado`,
+        );
       }
       project.owner = owner;
+
     }
+
+    if (updateProjectDto.startDate !== undefined) {
+      const dateStr = String(updateProjectDto.startDate);
+      project.startDate = dateStr.includes('T')
+        ? new Date(dateStr)
+        : new Date(`${dateStr}T12:00:00`);
+    }
+
+    if (updateProjectDto.estimateEnd !== undefined) {
+      const dateStr = String(updateProjectDto.estimateEnd);
+      project.estimateEnd = dateStr.includes('T')
+        ? new Date(dateStr)
+        : new Date(`${dateStr}T12:00:00`);
+    }
+
+    if (updateProjectDto.conclusionDate !== undefined) {
+        if (updateProjectDto.conclusionDate === null) {
+            project.conclusionDate = null;
+        } else {
+            const dateStr = String(updateProjectDto.conclusionDate);
+            project.conclusionDate = dateStr.includes('T')
+              ? new Date(dateStr)
+              : new Date(`${dateStr}T12:00:00`);
+        }
+}
 
     return this.projectsRepository.save(project);
   }
@@ -186,7 +251,7 @@ export class ProjectsService {
     projectId: string,
     addUserToProjectDto: AddUserToProjectDto,
   ): Promise<ProjectUser> {
-    const { userId, role } = addUserToProjectDto;
+    const { userId } = addUserToProjectDto;
 
     const project = await this.projectsRepository.findOne({
       where: { id: projectId },
@@ -194,48 +259,63 @@ export class ProjectsService {
     });
 
     if (!project) {
-      throw new NotFoundException(`Project with ID "${projectId}" not found`);
+      throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado`);
     }
 
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      relations: ['organizations'],
+      relations: ['organizations'], 
     });
 
     if (!user) {
-      throw new NotFoundException(`User with ID "${userId}" not found`);
+      throw new NotFoundException(`Utilizador com ID "${userId}" não encontrado`);
     }
-
-    if (!user.active) {
-      throw new BadRequestException(`User with ID "${userId}" is not active.`);
-    }
-
-    if (
-      !user.organizations ||
-      !user.organizations.some(org => org.id === project.organization.id)
-    ) {
+    
+    const isUserInOrg = user.organizations.some(org => org.id === project.organization.id);
+    if (!isUserInOrg) {
       throw new BadRequestException(
-        `User with ID "${userId}" does not belong to the same organization as the project.`,
+        `O utilizador ${user.name} não pertence à organização "${project.organization.name}".`,
       );
-    } 
+    }
 
     const existingProjectUser = await this.projectUsersRepository.findOne({
-        where: {
-            project: { id: projectId },
-            user: { id: userId }
-        }
+      where: {
+        project: { id: projectId },
+        user: { id: userId },
+      },
     });
 
     if (existingProjectUser) {
-        throw new BadRequestException(`User with ID "${userId}" is already in the project.`);
+      throw new BadRequestException(
+        `O utilizador ${user.name} já faz parte deste projeto.`,
+      );
     }
-
+    
     const newProjectUser = this.projectUsersRepository.create({
       project,
       user,
-      role,
     });
 
     return this.projectUsersRepository.save(newProjectUser);
+  }
+
+  async removeUserFromProject(projectId: string, userId: string): Promise<void> {
+    const result = await this.projectUsersRepository.delete({
+      project: { id: projectId },
+      user: { id: userId },
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException(
+        `Utilizador com ID "${userId}" não encontrado no projeto com ID "${projectId}"`,
+      );
+    }
+  }
+
+  async findUsersByProject(projectId: string): Promise<ProjectUser[]> {
+    return this.projectUsersRepository.find({
+      where: { project: { id: projectId } },
+      relations: ['user'],
+    });
   }
 }

@@ -48,6 +48,11 @@ export class ProjectsController {
     return this.projectsService.remove(id);
   }
 
+  @Get(':id/users')
+  findUsersByProject(@Param('id') id: string) {
+    return this.projectsService.findUsersByProject(id);
+  }
+
   @Post(':projectId/users')
   @ApiOperation({ summary: 'Adiciona um usuário a um projeto específico' })
   addUserToProject(
@@ -55,5 +60,14 @@ export class ProjectsController {
     @Body() addUserToProjectDto: AddUserToProjectDto,
   ) {
     return this.projectsService.addUserToProject(projectId, addUserToProjectDto);
+  }
+
+  @Delete(':projectId/users/:userId')
+  @ApiOperation({ summary: 'Remove um utilizador de um projeto específico' })
+  removeUserFromProject(
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
+    return this.projectsService.removeUserFromProject(projectId, userId);
   }
 }

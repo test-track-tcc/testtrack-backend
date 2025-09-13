@@ -31,12 +31,12 @@ export class CreateProjectDto {
   @ApiProperty({ description: 'Previsão de finalização do projeto', example: '2025-12-31', required: false })
   @IsOptional()
   @IsDateString()
-  estimateDate?: Date;
+  estimateEnd?: Date;
 
   @ApiProperty({ description: 'Data de conclusão do projeto', example: '2025-12-15', required: false })
   @IsOptional()
   @IsDateString()
-  conclusionDate?: Date
+  conclusionDate?: Date;
 
   @ApiProperty({
     description: 'Status inicial do projeto',

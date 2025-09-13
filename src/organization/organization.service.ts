@@ -246,11 +246,23 @@ export class OrganizationService {
     }
 }
 
-  async findByUserId(userId: string) { // NÃO TERMINEI!
+  async findByUserId(userId: string) {
     return this.organizationRepository.find({
       where: { users: { id: userId } },
       relations: ['admin'],
     });
+  }
+
+  async findUsersByOrganization(organizationId: string): Promise<User[]> {
+    const organization = await this.organizationRepository.findOne({
+      where: { id: organizationId },
+      relations: ['users'],
+    });
+
+    if (!organization) {
+      throw new NotFoundException(`Organização com ID "${organizationId}" não encontrada.`);
+    }
+    return organization.users.map(({ password, ...user }) => user) as User[];
   }
 
   async addUser(userId: string, organizationId: string) {
