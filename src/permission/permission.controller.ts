@@ -17,6 +17,11 @@ export class PermissionController {
     return this.permissionService.findAll();
   }
 
+  @Get('organization/:orgId')
+  findAllByOrg(@Param('orgId') orgId: string) {
+    return this.permissionService.findAllByOrg(orgId); 
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.permissionService.findOne(id);

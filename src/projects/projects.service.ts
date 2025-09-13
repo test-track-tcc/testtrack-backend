@@ -40,9 +40,6 @@ export class ProjectsService {
     private readonly dataSource: DataSource,
   ) {}
 
-
-
-
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
     // O uso do dataSource.transaction garante que tudo abaixo seja tudo feito, ou nada feito.
     // O dataSource vai receber um entityManager que será usado dentro da transação.
@@ -152,7 +149,7 @@ export class ProjectsService {
     });
   }
 
-  findAllByOrganization(organizationId: string): Promise<Project[]> {
+  async findAllByOrganization(organizationId: string): Promise<Project[]> {
     return this.projectsRepository.find({
       where: {
         organization: {

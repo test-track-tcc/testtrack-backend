@@ -17,6 +17,11 @@ export class AccessGroupController {
     return this.accessGroupService.findAll();
   }
 
+  @Get('organization/:orgId')
+  findAllInOrg(@Param('orgId') orgId: string) {
+    return this.accessGroupService.findAllInOrg(orgId);
+  }
+
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.accessGroupService.findOne(id);
