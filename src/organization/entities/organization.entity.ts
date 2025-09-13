@@ -4,6 +4,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Project } from 'src/projects/entities/project.entity';
 import { IsUUID } from 'class-validator';
 import { AccessGroup } from 'src/access-group/entities/access-group.entity';
+import { OrganizationUser } from './organization-user.entity';
+import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 
 @Entity()
 export class Organization {
@@ -37,12 +39,14 @@ export class Organization {
 
   // Define a relação de muitos pra muitos entre organizações e usuários.
   @ApiProperty({ type: () => [User], description: 'Lista de usuários que pertencem à organização' })
-  @ManyToMany(() => User, user => user.organizations)
-  @JoinTable()
-  users: User[];
+  @OneToMany(() => OrganizationUser, organizationUser => organizationUser.organization, { cascade: true })
+  organizationUsers: OrganizationUser[];
 
   //  // Define a relação de muitos pra muitos entre organizações e usuários.
   @ApiProperty({ type: () => [AccessGroup], description: 'Lista de grupos de acessos que pertencem à organização' })
   @OneToMany(() => AccessGroup, group => group.organization)
   accessGroups: AccessGroup[];
+
+  @OneToMany(() => CustomTestType, (type) => type.organization)
+  customTestTypes: CustomTestType[];
 }

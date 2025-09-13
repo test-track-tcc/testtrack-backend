@@ -17,9 +17,8 @@ export class CreatePermissionDto {
   @IsNotEmpty({ message: 'O ID do usuário responsável (admin) não pode estar vazio.' })
   createdById: string;
 
-  // Ainda não habilitado por falta de implementação (devo juntar com a parte do diogo)
-  //@ApiProperty({ description: 'ID do projeto associado', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef', required: true })
-  //@IsUUID()
-  //@IsNotEmpty({ message: 'O ID do projeto associado não pode estar vazio.' })
-  //projectId: string;
+  @ApiProperty({ description: 'ID do projeto associado', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef', required: true })
+  @IsUUID()
+  @IsNotEmpty({ message: 'O ID do projeto associado não pode estar vazio.' })
+  projectId: string;
 }

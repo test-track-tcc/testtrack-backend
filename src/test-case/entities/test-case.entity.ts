@@ -21,9 +21,22 @@ export class TestCase {
   @Column('text')
   description: string;
 
-  @ApiProperty({ description: 'Type of the test', enum: TestType })
-  @Column({ type: 'enum', enum: TestType, default: TestType.MANUAL })
-  testType: TestType;
+  @Column({
+    type: 'enum',
+    enum: TestType,
+    nullable: true,
+  })
+  testType: TestType | null;
+
+  @ApiProperty({ description: 'Custom type of the test', type: () => CustomTestType })
+  @ManyToOne(() => CustomTestType, (type) => type.testCases, {
+    nullable: true,
+    eager: true,
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn({ name: 'customTestTypeId' })
+  customTestType: CustomTestType | null;
+
 
 
 

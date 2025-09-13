@@ -83,12 +83,6 @@ export class Project {
   @JoinColumn()
   permission: Permission;
 
-
-
-  @OneToMany(() => CustomTestType, (customTestType) => customTestType.project)
-  customTestTypes: CustomTestType[];
-
-
   constructor() {
     if (!this.id) {
       this.id = uuidv4();

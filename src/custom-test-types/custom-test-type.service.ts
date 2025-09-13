@@ -4,41 +4,43 @@ import { Repository } from 'typeorm';
 import { CustomTestType } from './entities/custom-test-type.entity';
 import { CreateCustomTestTypeDto } from './dto/create-custom-test-type.dto';
 import { UpdateCustomTestTypeDto } from './dto/update-custom-test-type.dto';
-import { Project } from 'src/projects/entities/project.entity';
+import { Organization } from 'src/organization/entities/organization.entity'; // <-- Import Organization
 
 @Injectable()
 export class CustomTestTypesService {
   constructor(
     @InjectRepository(CustomTestType)
     private readonly customTestTypeRepository: Repository<CustomTestType>,
-    @InjectRepository(Project)
-    private readonly projectRepository: Repository<Project>,
+    @InjectRepository(Organization) // <-- Injete o repositório da Organização
+    private readonly organizationRepository: Repository<Organization>,
   ) {}
 
-  async create(projectId: string, createDto: CreateCustomTestTypeDto): Promise<CustomTestType> {
-    const project = await this.projectRepository.findOneBy({ id: projectId });
-    if (!project) {
-      throw new NotFoundException(`Project with ID "${projectId}" not found`);
+  async create(organizationId: string, createDto: CreateCustomTestTypeDto): Promise<CustomTestType> {
+    const organization = await this.organizationRepository.findOneBy({ id: organizationId });
+    if (!organization) {
+      throw new NotFoundException(`Organization with ID "${organizationId}" not found`);
     }
 
     const newType = this.customTestTypeRepository.create({
       ...createDto,
-      project,
+      organization,
     });
 
     try {
       return await this.customTestTypeRepository.save(newType);
     } catch (error) {
-      if (error.code === '23505') { // Código de erro para violação de constraint unique
-        throw new ConflictException(`A test type with name "${createDto.name}" already exists in this project.`);
+
+      if (error.code === '23505') {
+        throw new ConflictException(`A test type with name "${createDto.name}" already exists in this organization.`);
       }
       throw error;
     }
   }
 
-  findAllByProject(projectId: string): Promise<CustomTestType[]> {
+
+  findAllByOrganization(organizationId: string): Promise<CustomTestType[]> {
     return this.customTestTypeRepository.find({
-      where: { project: { id: projectId } },
+      where: { organization: { id: organizationId } },
       order: { name: 'ASC' },
     });
   }
@@ -58,15 +60,9 @@ export class CustomTestTypesService {
   }
 
   async remove(id: string): Promise<void> {
-    const type = await this.findOne(id);
-    try {
-      await this.customTestTypeRepository.remove(type);
-    } catch (error) {
-       // Código de erro para violação de foreign key (definimos 'RESTRICT')
-      if (error.code === '23503') {
-        throw new ConflictException('Cannot delete this test type because it is currently in use by one or more test cases.');
-      }
-      throw error;
+    const result = await this.customTestTypeRepository.delete(id);
+    if (result.affected === 0) {
+        throw new NotFoundException(`Custom Test Type with ID "${id}" not found.`);
     }
   }
 }

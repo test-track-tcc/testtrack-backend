@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Permission } from './entities/permission.entity';
 import { Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
+import { ProjectsService } from 'src/projects/projects.service';
 import { Logger } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 
@@ -13,11 +14,12 @@ export class PermissionService {
   constructor(
     @InjectRepository(Permission)
     private permissionRepository: Repository<Permission>,
-    private usersService: UsersService
+    private usersService: UsersService,
+    private projectsService: ProjectsService,
   ) {}
 
   async findAll() {
-    // Retorna uma lista de permissões e o nome, email e id do admin associado.
+
     return this.permissionRepository.find({
       select: {
         id: true,
@@ -27,6 +29,19 @@ export class PermissionService {
           id: true,
           name: true,
           email: true,
+        },
+      },
+      relations: ['createdBy'],
+    });
+  }
+
+  async findAllByOrg(orgId: string): Promise<Permission[]> {
+    return this.permissionRepository.find({
+      where: {
+        project: {
+          organization: {
+            id: orgId,
+          },
         },
       },
       relations: ['createdBy'],
@@ -52,19 +67,33 @@ export class PermissionService {
     return permission;
   }
 
-  async create(createDto: CreatePermissionDto) {
-    let currentUserId = createDto.createdById;
-    const user = await this.usersService.findOne(currentUserId);
+  async create(createDto: CreatePermissionDto): Promise<Permission> {
+    const { createdById, projectId, ...permissionData } = createDto;
 
-    if (!user) throw new BadRequestException('Usuário não encontrado');
+    const user = await this.usersService.findOne(createdById);
+    if (!user) {
+      throw new BadRequestException(`Usuário com ID "${createdById}" não encontrado.`);
+    }
 
+    const project = await this.projectsService.findOne(projectId);
+    if (!project) {
+      throw new BadRequestException(`Projeto com ID "${projectId}" não encontrado.`);
+    }
+    
     const permission = this.permissionRepository.create({
-      name: createDto.name,
-      description: createDto.description,
+      ...permissionData,
       createdBy: user,
+      project: project,
     });
 
-    return this.permissionRepository.save(permission);
+    try {
+        return await this.permissionRepository.save(permission);
+    } catch (error) {
+        if (error.code === '23505') {
+            throw new BadRequestException(`Já existe uma permissão com o nome "${permission.name}".`);
+        }
+        throw new BadRequestException('Erro ao salvar a permissão.');
+    }
   }
 
   async remove(id: string): Promise<void> {
