@@ -14,6 +14,4 @@ export class UpdateTestCaseStatusDto {
   @IsString()
   comment?: string;
 }
-export class UpdateTestCaseDto extends PartialType(CreateTestCaseDto) {
-
-}
+export class UpdateTestCaseDto extends PartialType(CreateTestCaseDto) {}

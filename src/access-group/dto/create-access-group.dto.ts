@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsArray, IsDate, IsString, IsUUID, ArrayMinSize, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsArray, IsString, IsUUID, IsOptional } from 'class-validator';
 
 export class CreateAccessGroupDto {
   @ApiProperty({ description: 'Nome do grupo de acesso', example: 'Desenvolvedores', required: true })
@@ -22,9 +22,14 @@ export class CreateAccessGroupDto {
   @IsNotEmpty({ message: 'O ID da organização não pode estar vazio.' })
   organizationId: string;
 
-  // Ainda não habilitado por falta de implementação (devo juntar com a parte do diogo)
-  //@ApiProperty({ description: 'ID do projeto associado', example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef', required: true })
-  //@IsUUID()
-  //@IsNotEmpty({ message: 'O ID do projeto associado não pode estar vazio.' })
-  //projectId: string;
+  @ApiProperty({
+    description: 'Lista de IDs de permissões a serem associadas ao grupo',
+    example: ['bf06482c-2d10-4d2b-9714-252b8a57bd68'],
+    required: false,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'As permissões devem ser uma lista de IDs.' })
+  @IsUUID('4', { each: true, message: 'Cada ID de permissão deve ser um UUID válido.' })
+  permissionIds?: string[];
 }

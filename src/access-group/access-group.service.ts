@@ -58,24 +58,34 @@ export class AccessGroupService {
 
   // Cria um novo grupo de acesso.
   async create(dto: CreateAccessGroupDto): Promise<AccessGroup> {
-    // Valida organização
-    const org = await this.orgRepo.findOne({ where: { id: dto.organizationId } });
-    if (!org) {
-      throw new BadRequestException(`Organização com id "${dto.organizationId}" não encontrada.`);
+    const { organizationId, name, description, permissionIds } = dto;
+
+    // 1. Valida a organização
+    const organization = await this.orgRepo.findOne({ where: { id: organizationId } });
+    if (!organization) {
+      throw new BadRequestException(`Organização com id "${organizationId}" não encontrada.`);
     }
 
-    // Checa existência de grupo com mesmo nome
     const duplicate = await this.groupsRepo.findOne({
-      where: { name: dto.name, organization: { id: dto.organizationId } },
+      where: { name, organization: { id: organizationId } },
     });
     if (duplicate) {
       throw new BadRequestException('Já existe um grupo com esse nome nesta organização.');
     }
 
+    let permissions: Permission[] = [];
+    if (permissionIds && permissionIds.length > 0) {
+      permissions = await this.permRepo.find({ where: { id: In(permissionIds) } });
+      if (permissions.length !== permissionIds.length) {
+        throw new BadRequestException('Uma ou mais permissões informadas não foram encontradas.');
+      }
+    }
+
     const group = this.groupsRepo.create({
-      name: dto.name,
-      description: dto.description,
-      organization: org
+      name,
+      description,
+      organization,
+      permissions,
     });
 
     try {

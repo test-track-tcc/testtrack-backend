@@ -38,7 +38,7 @@ import { CustomTestTypesModule } from './custom-test-types/custom-test-type.modu
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads/',
+      serveRoot: '/api/uploads',
     }),
     MulterModule.register({
       storage: diskStorage({

@@ -64,6 +64,10 @@ export class TestCase {
   @Column({ length: 50, nullable: true, default: '0m' })
   timeSpent: string;
 
+  @ApiProperty({ description: 'Date of the last execution', nullable: true })
+  @Column({ type: 'date', nullable: true })
+  executionDate: Date | null;
+
   @ApiProperty({ description: 'Execution steps' })
   @Column('text')
   steps: string;

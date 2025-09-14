@@ -36,16 +36,20 @@ export class ProjectsService {
     private projectUsersRepository: Repository<ProjectUser>,
     @InjectRepository(Permission)
     private permissionRepo: Repository<Permission>,
-    // DataSource para controlar a transação que criei para salvar a permissão quando o projeto é criado. [Lembrar de desfazer se der erro]
     private readonly dataSource: DataSource,
   ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
-    // O uso do dataSource.transaction garante que tudo abaixo seja tudo feito, ou nada feito.
-    // O dataSource vai receber um entityManager que será usado dentro da transação.
+    const {
+      name,
+      description,
+      organizationId,
+      ownerId,
+      startDate,
+      estimateEnd,
+      status,
+    } = createProjectDto;
 
-    const { name, description, organizationId, ownerId } = createProjectDto;
-    
     const prefix = generatePrefix(createProjectDto.name);
 
     const organization = await this.organizationsRepository.findOne({
@@ -62,11 +66,7 @@ export class ProjectsService {
       throw new NotFoundException(`User with ID "${ownerId}" not found`);
     }
 
-
-    
     return this.dataSource.transaction(async (entityManager) => {
-      // Como o projeto depende da permissão, a permissão deve ser criada antes e com base 
-      // nas informações passadas pelo usuário criador do projeto.
       const permissionName = `Acesso - Projeto ${name}`;
       const newPermission = entityManager.create(Permission, {
         name: permissionName,
@@ -75,34 +75,31 @@ export class ProjectsService {
       });
       const savedPermission = await entityManager.save(newPermission);
 
-      // Após criar e salvar a nova permissão, deve ser criado o projeto associado.
       const newProject = entityManager.create(Project, {
         name: name,
         description: description,
         organization: organization,
         owner: owner,
-        permission: savedPermission, 
+        permission: savedPermission,
         prefix: prefix,
+        startDate: startDate,
+        estimateEnd: estimateEnd,
+        status: status,
       });
 
       const savedProject = await entityManager.save(newProject);
 
-      // Atualizando a permissão com o projeto por se tratar de OneToOne bidirecional
-      // (embora o cascade muitas vezes cuide disso)
       savedPermission.project = savedProject;
       await entityManager.save(savedPermission);
-      
-      // Dono como ADMIN do projeto.
+
       const projectUser = entityManager.create(ProjectUser, {
         project: savedProject,
         user: owner,
         role: ProjectRole.ADMIN,
       });
 
-      const savedProjectUser = await entityManager.save(projectUser);
+      await entityManager.save(projectUser);
 
-      // Se não houve erros, a transação fará COMMIT.
-      // Se qualquer 'save' falhar, a transação fará o ROLLBACK.
       return savedProject;
     });
   }
