@@ -31,25 +31,19 @@ export class OrganizationService {
       throw new BadRequestException(`Organização com o nome "${organizationData.name}" já existe.`);
     }
 
-    // 1. Crie a organização base
-    const newOrganization = this.organizationRepository.create({
-      ...organizationData,
-      admin: adminUser, // Agora estamos passando um objeto User, não User | null
-      users: [adminUser], // Adiciona o admin também como membro da organização
-    });
+    const newOrganization = this.organizationRepository.create(organizationData);
 
-    // 2. Salve a organização para obter um ID
     const savedOrganization = await this.organizationRepository.save(newOrganization);
 
-    // 3. Crie a entrada na tabela de junção para o administrador
+
     const adminMembership = this.organizationUserRepository.create({
       organization: savedOrganization,
       user: adminUser,
-      role: OrganizationRole.ADMIN, // Atribui o cargo de ADMIN
+      role: OrganizationRole.ADMIN,
     });
     await this.organizationUserRepository.save(adminMembership);
 
-    return savedOrganization; // Retorna a organização recém-criada
+    return savedOrganization;
   }
 
   async validateCreateOrganizationDto(createOrganizationDto: CreateOrganizationDto): Promise<CreateOrganizationDto> {

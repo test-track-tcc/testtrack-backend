@@ -37,20 +37,6 @@ export class TestCase {
   @JoinColumn({ name: 'customTestTypeId' })
   customTestType: CustomTestType | null;
 
-
-
-
-  @ApiProperty({ description: 'Custom type of the test', type: () => CustomTestType })
-  @ManyToOne(() => CustomTestType, (type) => type.testCases, {
-    nullable: false, // Um caso de teste DEVE ter um tipo
-    eager: true,     // Carrega o tipo automaticamente ao buscar um TestCase
-    onDelete: 'RESTRICT', // Impede a exclusão de um tipo que está em uso
-  })
-  @JoinColumn({ name: 'customTestTypeId' })
-  customTestType: CustomTestType;
-
-
-
   @ApiProperty({ description: 'Priority of the test case', enum: Priority })
   @Column({ type: 'enum', enum: Priority, default: Priority.MEDIUM })
   priority: Priority;
@@ -77,6 +63,10 @@ export class TestCase {
   @ApiProperty({ description: 'Time spent on execution' })
   @Column({ length: 50, nullable: true, default: '0m' })
   timeSpent: string;
+
+  @ApiProperty({ description: 'Date of the last execution', nullable: true })
+  @Column({ type: 'date', nullable: true })
+  executionDate: Date | null;
 
   @ApiProperty({ description: 'Execution steps' })
   @Column('text')
