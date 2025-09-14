@@ -1,0 +1,6 @@
+export enum projectStatus {
+    NOT_STARTED = 'NAO_INICIADO',
+    IN_PROGRESS = 'EM_PROGRESSO',
+    FINISHED = 'CONCLUIDO',
+    BLOCKED = 'BLOQUEADO'
+}

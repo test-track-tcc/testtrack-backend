@@ -44,6 +44,34 @@ export class UsersController {
     return user;
   }
 
+
+  @Get('email/:email')
+  @ApiOperation({ summary: 'Busca um usuário pelo email' })
+  @ApiParam({ name: 'email', description: 'Email do usuário', type: 'string' })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado', type: User })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async findByEmail(@Param('email') email: string): Promise<User> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+    return user;
+  }
+
+  @Get(':id/organizations')
+  @ApiOperation({ summary: 'Lista as organizações associadas a um usuário' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do usuário (UUID)',
+    type: 'string',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
+  })
+  @ApiResponse({ status: 200, description: 'Lista de organizações retornada com sucesso', type: [Object] })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async findUserOrganizations(@Param('id') id: string): Promise<any[]> {
+    return this.usersService.findOrganizations(id);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Atualiza um usuário existente' })
   @ApiParam({ name: 'id', description: 'ID do usuário (UUID)', type: 'string' })

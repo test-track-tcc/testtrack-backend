@@ -13,8 +13,8 @@ logs:
 restart:
 	docker compose down && docker compose up -d
 
-bash-backend:
-	docker exec -it nest_backend bash
+bash: # Root
+	docker exec -it --user root nest_backend /bin/bash
 
 bash-mysql:
 	docker exec -it mysql_db bash

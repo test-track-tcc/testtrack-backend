@@ -1,12 +1,20 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UsersModule } from './users/users.module';
-import { TestCasesModule } from './test-case/test-case.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MulterModule } from '@nestjs/platform-express';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
+import { TestCasesModule } from './test-case/test-case.module';
+import { ProjectsModule } from './projects/projects.module';
 import { OrganizationModule } from './organization/organization.module';
 import { AuthModule } from './auth/auth.module';
+import { PermissionModule } from './permission/permission.module';
+import { AccessGroupModule } from './access-group/access-group.module';
+import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
 
 @Module({
   imports: [
@@ -28,10 +36,27 @@ import { AuthModule } from './auth/auth.module';
       }),
       inject: [ConfigService],
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/api/uploads',
+    }),
+    MulterModule.register({
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const randomName = Array(32).fill(null).map(() => Math.round(Math.random() * 16).toString(16)).join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+    }),
     UsersModule,
     TestCasesModule,
+    ProjectsModule,
     OrganizationModule,
     AuthModule,
+    PermissionModule,
+    AccessGroupModule,
+    CustomTestTypesModule
   ],
   controllers: [AppController],
   providers: [AppService],

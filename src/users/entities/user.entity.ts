@@ -2,6 +2,9 @@ import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToMany, OneToMany 
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../../organization/entities/organization.entity';
+import { ProjectUser } from 'src/projects/entities/project-user.entity';
+import { Permission } from 'src/permission/entities/permission.entity';
+import { AccessGroup } from 'src/access-group/entities/access-group.entity';
 
 @Entity('users')
 export class User {
@@ -26,8 +29,12 @@ export class User {
   active: boolean;
 
   @ApiProperty({ type: () => [Organization], description: 'Lista de organizações as quais o usuário pertence' })
-  @ManyToMany(() => Organization, organization => organization.users)
+  @ManyToMany(() => Organization, organization => organization.organizationUsers)
   organizations: Organization[];
+
+  @ApiProperty({ type: () => [Organization], description: 'Lista de projetos as quais o usuário pertence' })
+  @OneToMany(() => ProjectUser, projectUser => projectUser.user)
+  projectUsers: ProjectUser[];  
 
   // Propriedade para acessar todas as organizações que este usuário administra.
   @OneToMany(() => Organization, organization => organization.admin, {
@@ -44,6 +51,14 @@ export class User {
   @ApiProperty({ description: 'Data e hora de criação do usuário', example: '2025-06-10T21:00:00.000Z' })
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
+
+  // lista de permissões criadas por este usuário
+  @OneToMany(() => Permission, (p) => p.createdBy)
+  createdPermissions?: Permission[];
+
+  // lista de grupos de acesso criados por este usuário
+  @OneToMany(() => AccessGroup, (p) => p.createdBy)
+  createdAccessGroups?: AccessGroup[];
 
   constructor() {
     if (!this.id) {
