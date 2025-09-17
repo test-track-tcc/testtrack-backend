@@ -2,6 +2,7 @@ import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToMany, OneToMany 
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../../organization/entities/organization.entity';
+import { OrganizationUser } from 'src/organization/entities/organization-user.entity';
 import { ProjectUser } from 'src/projects/entities/project-user.entity';
 import { Permission } from 'src/permission/entities/permission.entity';
 import { AccessGroup } from 'src/access-group/entities/access-group.entity';
@@ -29,8 +30,8 @@ export class User {
   active: boolean;
 
   @ApiProperty({ type: () => [Organization], description: 'Lista de organizações as quais o usuário pertence' })
-  @ManyToMany(() => Organization, organization => organization.organizationUsers)
-  organizations: Organization[];
+  @OneToMany(() => OrganizationUser, organizationUser => organizationUser.user)
+  organizationUsers: OrganizationUser[];
 
   @ApiProperty({ type: () => [Organization], description: 'Lista de projetos as quais o usuário pertence' })
   @OneToMany(() => ProjectUser, projectUser => projectUser.user)

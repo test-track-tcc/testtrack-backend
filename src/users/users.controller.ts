@@ -69,7 +69,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Lista de organizações retornada com sucesso', type: [Object] })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async findUserOrganizations(@Param('id') id: string): Promise<any[]> {
-    return this.usersService.findOrganizations(id);
+    return this.usersService.findUserOrganizations(id);
   }
 
   @Put(':id')

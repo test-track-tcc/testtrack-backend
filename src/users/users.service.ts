@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -67,19 +67,18 @@ export class UsersService {
     await this.usersRepository.delete(id);
   }
 
-    async findOrganizations(userId: string): Promise<Organization[]> {
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      relations: {
-        organizations: true
-      },
-    });
+    async findUserOrganizations(id: string): Promise<Organization[]> { // Tipagem de retorno ajustada
+      const user = await this.usersRepository.findOne({
+        where: { id },
+        relations: ['organizationUsers', 'organizationUsers.organization'], // Carrega a relação aninhada
+      });
 
-    if (!user) {
-      throw new BadRequestException(`User with ID "${userId}" not found.`);
+      if (!user) {
+        throw new NotFoundException(`Usuário com ID "${id}" não encontrado`);
+      }
+
+      // Mapeia para retornar apenas a lista de organizações
+      return user.organizationUsers.map(orgUser => orgUser.organization);
     }
-
-    return user.organizations;
-  }
 
 }

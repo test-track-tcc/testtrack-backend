@@ -242,56 +242,59 @@ export class ProjectsService {
   }
 
   async addUserToProject(
-    projectId: string,
-    addUserToProjectDto: AddUserToProjectDto,
-  ): Promise<ProjectUser> {
-    const { userId } = addUserToProjectDto;
+  projectId: string,
+  addUserToProjectDto: AddUserToProjectDto,
+): Promise<ProjectUser> {
+  const { userId } = addUserToProjectDto;
 
-    const project = await this.projectsRepository.findOne({
-      where: { id: projectId },
-      relations: ['organization'],
-    });
+  const project = await this.projectsRepository.findOne({
+    where: { id: projectId },
+    relations: ['organization'], // Carrega a organização do projeto
+  });
 
-    if (!project) {
-      throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado`);
-    }
-
-    const user = await this.usersRepository.findOne({
-      where: { id: userId },
-      relations: ['organizations'], 
-    });
-
-    if (!user) {
-      throw new NotFoundException(`Utilizador com ID "${userId}" não encontrado`);
-    }
-    
-    const isUserInOrg = user.organizations.some(org => org.id === project.organization.id);
-    if (!isUserInOrg) {
-      throw new BadRequestException(
-        `O utilizador ${user.name} não pertence à organização "${project.organization.name}".`,
-      );
-    }
-
-    const existingProjectUser = await this.projectUsersRepository.findOne({
-      where: {
-        project: { id: projectId },
-        user: { id: userId },
-      },
-    });
-
-    if (existingProjectUser) {
-      throw new BadRequestException(
-        `O utilizador ${user.name} já faz parte deste projeto.`,
-      );
-    }
-    
-    const newProjectUser = this.projectUsersRepository.create({
-      project,
-      user,
-    });
-
-    return this.projectUsersRepository.save(newProjectUser);
+  if (!project) {
+    throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado`);
   }
+
+  const user = await this.usersRepository.findOne({
+    where: { id: userId },
+    relations: ['organizationUsers', 'organizationUsers.organization'], 
+  });
+
+  if (!user) {
+    throw new NotFoundException(`Utilizador com ID "${userId}" não encontrado`);
+  }
+  
+  const isUserInOrg = user.organizationUsers.some(
+    (orgUser) => orgUser.organization.id === project.organization.id,
+  );
+
+  if (!isUserInOrg) {
+    throw new BadRequestException(
+      `O utilizador ${user.name} não pertence à organização "${project.organization.name}".`,
+    );
+  }
+
+  const existingProjectUser = await this.projectUsersRepository.findOne({
+    where: {
+      project: { id: projectId },
+      user: { id: userId },
+    },
+  });
+
+  if (existingProjectUser) {
+    throw new BadRequestException(
+      `O utilizador ${user.name} já faz parte deste projeto.`,
+    );
+  }
+  
+  const newProjectUser = this.projectUsersRepository.create({
+    project,
+    user,
+  });
+
+  return this.projectUsersRepository.save(newProjectUser);
+}
 
   async removeUserFromProject(projectId: string, userId: string): Promise<void> {
     const result = await this.projectUsersRepository.delete({
