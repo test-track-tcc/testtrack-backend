@@ -17,7 +17,7 @@ export class OrganizationUser {
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
-  @ManyToOne(() => User, user => user.organizations)
+  @ManyToOne(() => User, user => user.organizationUsers)
   @JoinColumn({ name: 'userId' })
   user: User;
 
