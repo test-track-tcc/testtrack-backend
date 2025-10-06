@@ -58,6 +58,31 @@ export class UsersController {
     return user;
   }
 
+  @Get(':id/projects')
+  @ApiOperation({ summary: 'Lista todos os projetos associados a um usuário' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID do usuário (UUID)',
+    type: 'string',
+    example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef'
+  })
+  @ApiResponse({ status: 200, description: 'Lista de projetos retornada com sucesso', type: [Object] })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async findUserProjects(@Param('id') id: string): Promise<User> {
+    return this.usersService.findAccessibleProjects(id);
+  }
+
+  // Rota: GET /users/:userId/organizations/:organizationId/projects
+  @Get(':userId/organizations/:organizationId/projects')
+  @ApiOperation({ summary: 'Busca os projetos acessíveis por um usuário em uma organização' })
+  // @UseGuards(...) // Lembre-se de proteger suas rotas!
+  findUserProjectsInOrganization(
+    @Param('userId') userId: string,
+    @Param('organizationId') organizationId: string,
+  ) {
+    return this.usersService.findUserProjectsInOrganization(userId, organizationId);
+  }
+
   @Get(':id/organizations')
   @ApiOperation({ summary: 'Lista as organizações associadas a um usuário' })
   @ApiParam({

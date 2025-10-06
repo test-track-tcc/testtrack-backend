@@ -42,6 +42,11 @@ export class OrganizationController {
     return this.organizationService.findUsersByOrganization(id);
   }
 
+  @Get(':id/access-groups')
+  findGroupAccessByOrganization(@Param('id') id: string) {
+    return this.organizationService.findAccessGroupsWithPermissions(id);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrganizationDto: UpdateOrganizationDto) {
     return this.organizationService.update(id, updateOrganizationDto);

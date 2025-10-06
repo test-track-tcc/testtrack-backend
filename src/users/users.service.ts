@@ -5,6 +5,7 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { Organization } from 'src/organization/entities/organization.entity';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,8 @@ export class UsersService {
     private usersRepository: Repository<User>,
     @InjectRepository(Organization)
     private orgRepo: Repository<Organization>,
+    @InjectRepository(Project)
+    private projectsRepository: Repository<Project>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -67,18 +70,51 @@ export class UsersService {
     await this.usersRepository.delete(id);
   }
 
-    async findUserOrganizations(id: string): Promise<Organization[]> { // Tipagem de retorno ajustada
-      const user = await this.usersRepository.findOne({
-        where: { id },
-        relations: ['organizationUsers', 'organizationUsers.organization'], // Carrega a relação aninhada
-      });
+  async findUserOrganizations(id: string): Promise<Organization[]> { // Tipagem de retorno ajustada
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['organizationUsers', 'organizationUsers.organization'], // Carrega a relação aninhada
+    });
 
-      if (!user) {
-        throw new NotFoundException(`Usuário com ID "${id}" não encontrado`);
-      }
-
-      // Mapeia para retornar apenas a lista de organizações
-      return user.organizationUsers.map(orgUser => orgUser.organization);
+    if (!user) {
+      throw new NotFoundException(`Usuário com ID "${id}" não encontrado`);
     }
 
+    // Mapeia para retornar apenas a lista de organizações
+    return user.organizationUsers.map(orgUser => orgUser.organization);
+  }
+
+  async findAccessibleProjects(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id,
+        accessGroups: {
+          permissions: {
+            project: true
+          }
+        }
+      },
+      relations: ['accessGroups.permissions.project'], //'organizationUsers', 'organizationUsers.organization', 'organizationUsers.organization.projects'
+    });
+  
+    if (!user) {
+      throw new NotFoundException(`Usuário com ID "${id}" não encontrado`);
+    }
+
+    // Mapeia para retornar apenas a lista de projetos acessíveis
+    //return user.organizationUsers.flatMap(orgUser => orgUser.organization.projects);
+    return user;
+  }
+
+  async findUserProjectsInOrganization(userId: string, organizationId: string): Promise<Project[]> {
+    return this.projectsRepository.createQueryBuilder('project')
+    .innerJoin('project.permission', 'permission')
+    .innerJoin('permission.accessGroups', 'accessGroup')
+    .innerJoin('accessGroup.users', 'user')
+    .where('user.id = :userId', { userId })
+    .andWhere('project.organizationId = :organizationId', { organizationId })
+    .distinct(true)
+    .leftJoinAndSelect('project.owner', 'owner')
+    .getMany();
+  }
 }

@@ -68,4 +68,9 @@ export class AccessGroup {
     nullable: false,
   })
   organization: Organization;
+
+  // lista de usuários associados a este grupo de acesso
+  @ManyToMany(() => User, user => user.accessGroups)
+  @JoinTable()
+  users: User[];
 }

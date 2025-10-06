@@ -61,6 +61,10 @@ export class User {
   @OneToMany(() => AccessGroup, (p) => p.createdBy)
   createdAccessGroups?: AccessGroup[];
 
+  // lista de grupos de acesso associados a este usuário
+  @ManyToMany(() => AccessGroup, (p) => p.users)
+  accessGroups?: AccessGroup[];
+
   constructor() {
     if (!this.id) {
       this.id = uuidv4();
