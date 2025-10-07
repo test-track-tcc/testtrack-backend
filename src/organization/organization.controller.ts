@@ -4,6 +4,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { AddUserToOrganizationDto } from './dto/addUserToOrganization.dto';
 import { OrganizationRole } from './entities/organization-user.entity';
+import { Organization } from './entities/organization.entity';
 
 class UpdateUserRoleDto {
   role: OrganizationRole;
@@ -35,6 +36,11 @@ export class OrganizationController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.organizationService.findOne(id);
+  }
+
+  @Get('user/:userId')
+  async findOrganizationsByUser(@Param('userId') userId: string): Promise<Organization[]> {
+    return this.organizationService.findByUserId(userId);
   }
 
   @Get(':id/users')

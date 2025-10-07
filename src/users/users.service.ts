@@ -80,5 +80,4 @@ export class UsersService {
       // Mapeia para retornar apenas a lista de organizações
       return user.organizationUsers.map(orgUser => orgUser.organization);
     }
-
 }
