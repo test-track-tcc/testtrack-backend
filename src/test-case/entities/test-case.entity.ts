@@ -6,6 +6,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Script } from './script.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
+import { TestScenario } from 'src/test-scenario/entities/test-scenario.entity';
 
 @Entity('test_cases')
 export class TestCase {
@@ -105,6 +106,17 @@ export class TestCase {
 
   @OneToMany(() => Script, script => script.testCase, { cascade: true, eager: true })
   scripts: Script[];
+
+  @Column({ type: 'uuid', nullable: true })
+  testScenarioId: string | null;
+
+  @ManyToOne(() => TestScenario, (scenario) => scenario.testCases, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: true,
+  })
+  @JoinColumn({ name: 'testScenarioId' })
+  testScenario: TestScenario;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
