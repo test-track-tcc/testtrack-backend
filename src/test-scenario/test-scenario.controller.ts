@@ -3,7 +3,7 @@ import { TestScenarioService } from './test-scenario.service';
 import { CreateTestScenarioDto } from './dto/create-test-scenario.dto';
 import { UpdateTestScenarioDto } from './dto/update-test-scenario.dto';
 import { TestScenario } from './entities/test-scenario.entity';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('test-scenarios')
 @Controller('test-scenarios')
@@ -14,7 +14,7 @@ export class TestScenarioController {
   @ApiOperation({ summary: 'Cria um novo cenário de teste' })
   @ApiResponse({ status: 201, description: 'Cenário de teste criado com sucesso.', type: TestScenario })
   create(@Body() createTestScenarioDto: CreateTestScenarioDto): Promise<TestScenario> {
-    return this.testScenarioService.create(createTestScenarioDto);
+        return this.testScenarioService.create(createTestScenarioDto);
   }
 
   @Get()

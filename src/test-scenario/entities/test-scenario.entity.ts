@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, OneToMany, JoinTable, ManyToOne, JoinColumn } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { Project } from 'src/projects/entities/project.entity';
@@ -45,12 +45,7 @@ export class TestScenario {
   @Column('uuid')
   projectId: string;
 
-  @ManyToMany(() => TestCase)
-  @JoinTable({
-    name: 'scenario_test_cases',
-    joinColumn: { name: 'scenarioId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'testCaseId', referencedColumnName: 'id' },
-  })
+  @OneToMany(() => TestCase, (testCase) => testCase.testScenario)
   testCases: TestCase[];
 
   constructor() {

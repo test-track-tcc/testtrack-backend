@@ -80,4 +80,8 @@ export class CreateTestCaseDto {
   @IsArray()
   @IsString({ each: true })
   scripts?: string[];
+
+  @IsUUID()
+  @IsOptional()
+  testScenarioId?: string;
 }
