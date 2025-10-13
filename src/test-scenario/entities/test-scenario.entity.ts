@@ -10,7 +10,6 @@ export class TestScenario {
   @PrimaryColumn('uuid')
   id: string;
 
-  @ApiProperty({ description: 'Identificador único customizável para o cenário', example: 'CTN-001' })
   @Column({ length: 50, unique: true })
   identifier: string;
 

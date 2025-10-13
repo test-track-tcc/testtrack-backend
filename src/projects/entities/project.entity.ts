@@ -48,6 +48,9 @@ export class Project {
   @Column({ type: 'date', nullable: true })
   conclusionDate: Date | null;
 
+  @Column({ type: 'int', default: 0, comment: 'Contador para o próximo cenário de teste' })
+  testScenarioCounter: number;
+
   @OneToMany(() => TestScenario, (testScenario) => testScenario.project)
   testScenarios: TestScenario[];
 

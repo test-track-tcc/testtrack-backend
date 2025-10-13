@@ -2,11 +2,6 @@ import { IsString, IsNotEmpty, IsOptional, IsArray, IsUUID } from 'class-validat
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTestScenarioDto {
-  @ApiProperty({ description: 'Identificador único customizável', example: 'CTN-001' })
-  @IsString()
-  @IsNotEmpty()
-  identifier: string;
-
   @ApiProperty({ description: 'Nome do cenário de teste' })
   @IsString()
   @IsNotEmpty()
