@@ -19,14 +19,13 @@ export class TestCasesService {
     private customTestTypeRepository: Repository<CustomTestType>,
   ) {}
 
-  // Definição centralizada de TODAS as relações que a API deve retornar.
   private readonly relationsToLoad = [
     'project',
     'createdBy',
     'responsible',
     'customTestType',
     'scripts',
-    'testScenario', // A relação que faltava.
+    'testScenario',
   ];
 
   async create(createTestCaseDto: CreateTestCaseDto): Promise<TestCase> {
@@ -89,34 +88,36 @@ export class TestCasesService {
       }
       return savedTestCase;
     });
-    // Garante que o retorno para o frontend seja a entidade completa
     return this.findOne(newTestCase.id);
   }
 
   findAllByProject(projectId: string): Promise<TestCase[]> {
     return this.testCasesRepository.find({
       where: { project: { id: projectId } },
-      // Usa a lista centralizada de relações
       relations: this.relationsToLoad,
     });
   }
 
-  findOne(id: string): Promise<TestCase | null> {
-    return this.testCasesRepository.findOne({
+  async findOne(id: string): Promise<TestCase> {
+    const testCase = await this.testCasesRepository.findOne({
       where: { id },
-      // Usa a lista centralizada de relações
       relations: this.relationsToLoad,
     });
+
+    if (!testCase) {
+      throw new NotFoundException(`Caso de teste com ID ${id} não encontrado`);
+    }
+
+    return testCase;
   }
 
   async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
     const { scripts, customTestTypeId, testScenarioId, ...restDto } = updateTestCaseDto;
 
-    // O método 'preload' carrega a entidade e aplica as alterações do DTO
     const testCase = await this.testCasesRepository.preload({
       id: id,
       ...restDto,
-      testScenarioId: testScenarioId, // Aplica a alteração do cenário
+      testScenarioId: testScenarioId,
     });
 
     if (!testCase) {
@@ -136,7 +137,6 @@ export class TestCasesService {
 
     await this.testCasesRepository.save(testCase);
 
-    // Garante que o retorno para o frontend seja a entidade completa e atualizada
     return this.findOne(id);
   }
 

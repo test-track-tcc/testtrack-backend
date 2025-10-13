@@ -110,7 +110,11 @@ export class TestCase {
   @Column({ type: 'uuid', nullable: true })
   testScenarioId: string | null;
 
-  @ManyToOne(() => TestScenario, (scenario) => scenario.testCases, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => TestScenario, (scenario) => scenario.testCases, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    eager: true,
+  })
   @JoinColumn({ name: 'testScenarioId' })
   testScenario: TestScenario;
 
