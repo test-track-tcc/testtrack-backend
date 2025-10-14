@@ -15,6 +15,8 @@ import { AuthModule } from './auth/auth.module';
 import { PermissionModule } from './permission/permission.module';
 import { AccessGroupModule } from './access-group/access-group.module';
 import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
+import { ReportsModule } from './reports/reports.module';
+import { ScheduleModule } from '@nestjs/schedule'; // <-- 1. Importar o ScheduleModule
 
 @Module({
   imports: [
@@ -56,7 +58,9 @@ import { CustomTestTypesModule } from './custom-test-types/custom-test-type.modu
     AuthModule,
     PermissionModule,
     AccessGroupModule,
-    CustomTestTypesModule
+    CustomTestTypesModule,
+    ReportsModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
