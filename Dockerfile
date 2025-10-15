@@ -22,6 +22,9 @@ COPY package*.json ./
 
 RUN npm install -g @nestjs/cli --legacy-peer-deps && npm install --legacy-peer-deps
 
+COPY .env .env
+
+
 COPY . .
 
 RUN chmod -R 777 /app

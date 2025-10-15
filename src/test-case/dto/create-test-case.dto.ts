@@ -1,7 +1,8 @@
 import { IsString, IsEnum, IsUUID, IsOptional, IsArray, IsNotEmpty } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ApiProperty } from '@nestjs/swagger';
-import { TestType, Priority, TestCaseStatus } from '../../config/enums';
+import { TestType, Priority, TestCaseStatus, FunctionalTestFramework } from '../../config/enums';
+import { DeviceType } from 'src/enum/deviceType';
 
 export class CreateTestCaseDto {
   @ApiProperty({ description: 'Title of the test case', example: 'Validate feature X' })
@@ -84,4 +85,19 @@ export class CreateTestCaseDto {
   @IsUUID()
   @IsOptional()
   testScenarioId?: string;
+
+  @ApiPropertyOptional({ description: 'Target device for the test', enum: DeviceType, example: DeviceType.DESKTOP })
+  @IsOptional()
+  @IsEnum(DeviceType)
+  targetDevice?: DeviceType;
+
+  @ApiPropertyOptional({ description: 'Custom target device if "Other" is selected', example: 'Smart TV' })
+  @IsOptional()
+  @IsString()
+  customTargetDevice?: string;
+
+  @ApiPropertyOptional({ description: 'Framework para teste funcional', enum: FunctionalTestFramework })
+  @IsOptional()
+  @IsEnum(FunctionalTestFramework)
+  functionalFramework?: FunctionalTestFramework;
 }
