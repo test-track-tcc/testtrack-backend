@@ -8,6 +8,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Script } from './script.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 import { TestScenario } from 'src/test-scenario/entities/test-scenario.entity';
+import { Comment } from '../../comment/entities/comment.entity';
 
 @Entity('test_cases')
 export class TestCase {
@@ -92,8 +93,8 @@ export class TestCase {
     isArray: true,
     example: ['Comentário 1', 'Comentário 2'],
   })
-  @Column('json', { nullable: true })
-  comments: { idUser: string; comment: string; date: Date }[];
+  @OneToMany(() => Comment, comment => comment.testCase, { cascade: true, eager: true })
+  comments: Comment[];
 
   @ApiProperty({
     description:

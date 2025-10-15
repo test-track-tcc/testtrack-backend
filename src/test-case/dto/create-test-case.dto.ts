@@ -65,11 +65,6 @@ export class CreateTestCaseDto {
   @IsEnum(TestCaseStatus)
   status?: TestCaseStatus;
 
-  @ApiProperty({ description: 'Comments', type: Object, isArray: true, required: false })
-  @IsOptional()
-  @IsArray()
-  comments?: { idUser: string; comment: string; date: Date }[];
-
   @ApiProperty({ description: 'Attachments (URLs or file IDs)', type: String, isArray: true, required: false })
   @IsOptional()
   @IsArray()
