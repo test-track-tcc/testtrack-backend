@@ -5,10 +5,11 @@ import { Report } from './entities/report.entity';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
 import { TestCaseStatus } from 'src/config/enums';
 import { Project } from 'src/projects/entities/project.entity';
-import * as PDFDocument from 'pdfkit'; // <-- A ÚNICA LINHA QUE PRECISA MUDAR
+import PDFDocument = require('pdfkit');
 import * as fs from 'fs';
 import * as path from 'path';
 import { ChartService } from 'src/chart/chart.service';
+import { PdfGeneratorService } from 'src/pdf-generator/pdf-generator.service';
 
 @Injectable()
 export class ReportsService {
@@ -22,6 +23,7 @@ export class ReportsService {
     @InjectRepository(Project)
     private readonly projectRepository: Repository<Project>,
     private readonly chartService: ChartService,
+    private readonly pdfGeneratorService: PdfGeneratorService,
   ) {}
 
   /**
@@ -34,7 +36,7 @@ export class ReportsService {
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - 7);
 
-    // 1. Encontrar todos os projetos com atividade na última semana
+    // Encontra todos os projetos com atividade na última semana
     const activeProjects = await this.findProjects();
 
     if (activeProjects.length === 0) {
@@ -44,7 +46,7 @@ export class ReportsService {
 
     this.logger.log(`Encontrados ${activeProjects.length} projetos ativos para gerar relatórios.`);
 
-    // 2. Iterar sobre cada projeto ativo e gerar um relatório individual
+    // Itera sobre cada projeto ativo e gerar um relatório individual
     for (const project of activeProjects) {
       await this.generateReportForProject(project, startDate, endDate);
     }
@@ -54,6 +56,7 @@ export class ReportsService {
    * Conta quantos casos de teste existem para cada status dentro de um período específico.
    */
   private async countTestCasesByStatus(projectId: string, startDate: Date, endDate: Date): Promise<Map<string, number>> {
+
     // A partir do enum TestCaseStatus, contamos quantos casos de teste existem para cada status
     // dentro da última semana (no futuro podemos fazer com períodos mais flexíveis).
     const allStatuses = Object.values(TestCaseStatus);
@@ -78,25 +81,32 @@ export class ReportsService {
     return statuses;
   }
 
+  private async createFilePath(fileName: string): Promise<string> {
+    const testtrackdir = process.cwd();
+    this.logger.log(`Diretório atual do processo: ${testtrackdir}`);
+    const consecutiveDirs = [testtrackdir, 'private', 'reports'];
+    const reportsDir = path.join(...consecutiveDirs);
+    await fs.promises.mkdir(reportsDir, { recursive: true });
+    return path.join(reportsDir, fileName);
+  }
+
   /**
    * Gera um relatório específico para um único projeto em um determinado período.
    */
   private async generateReportForProject(project: Project, startDate: Date, endDate: Date): Promise<void> {
     this.logger.log(`Gerando relatório para o projeto: "${project.name}" (ID: ${project.id})`);
-    // A partir do enum TestCaseStatus, contamos quantos casos de teste existem para cada status
-    // dentro da última semana (no futuro podemos fazer com períodos mais flexíveis).
+
+    // Cria um Map com a contagem de status dos casos de teste
     const statusesCountedMap = await this.countTestCasesByStatus(project.id, startDate, endDate);
+    const statusesCountedString = JSON.stringify(Array.from(statusesCountedMap.entries()));
 
-    this.logger.log(`Status coletados: ${JSON.stringify(Array.from(statusesCountedMap.entries()))}`);
-
+    this.logger.log(`Status coletados para o projeto "${project.name}": ${statusesCountedString}`);
     const reportData = { statuses: statusesCountedMap };
 
     // Gera um nome de arquivo único por projeto
     const fileName = `Relatorio-${project.name.replace(/\s/g, '_')}-${endDate.toISOString().split('T')[0]}.pdf`;
-    const reportsDir = path.join(process.cwd(), 'private', 'reports');
-    fs.mkdirSync(reportsDir, { recursive: true });
-    const filePath = path.join(reportsDir, fileName);
-
+    const filePath = await this.createFilePath(fileName);
+    this.logger.log(`Caminho do arquivo do relatório: ${filePath}`);
     // Passa o nome do projeto para o gerador de PDF
     await this.createPdf(filePath, reportData, startDate, endDate, project.name);
 
@@ -104,8 +114,7 @@ export class ReportsService {
     const newReport = this.reportRepository.create({
       fileName,
       filePath,
-      ...reportData,
-      //project: project, dá pra criar uma relação se quiser entre relatório e projeto
+      //project: project, //dá pra criar uma relação se quiser entre relatório e projeto
     });
     
     await this.reportRepository.save(newReport);
@@ -150,12 +159,10 @@ export class ReportsService {
       doc.fontSize(18).text('Resumo dos Resultados:', { underline: true });
       doc.moveDown();
         
-      // --- LAYOUT EM DUAS COLUNAS: GRÁFICO E LEGENDA ---
       const chartX = doc.x;
       const chartY = doc.y;
       const chartWidth = 250;
       
-      // 4. Incorpore a imagem do gráfico no PDF
       doc.image(chartBuffer, chartX, chartY, {
         fit: [chartWidth, chartWidth],
         align: 'center',

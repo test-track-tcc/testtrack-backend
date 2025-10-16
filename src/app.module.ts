@@ -17,6 +17,7 @@ import { AccessGroupModule } from './access-group/access-group.module';
 import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
 import { ReportsModule } from './reports/reports.module';
 import { ScheduleModule } from '@nestjs/schedule'; // <-- 1. Importar o ScheduleModule
+import { PdfGeneratorModule } from './pdf-generator/pdf-generator.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { ScheduleModule } from '@nestjs/schedule'; // <-- 1. Importar o Schedule
     CustomTestTypesModule,
     ReportsModule,
     ScheduleModule.forRoot(),
+    PdfGeneratorModule,
   ],
   controllers: [AppController],
   providers: [AppService],

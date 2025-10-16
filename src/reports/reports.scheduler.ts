@@ -12,8 +12,14 @@ export class ReportsScheduler {
     name: 'weekly_test_report',
     timeZone: 'America/Sao_Paulo',
   })
-  handleCron() {
-    this.logger.log('Gatilho do agendador de relatórios semanais disparado...');
-    this.reportsService.generateWeeklyReport();
+  public async handleCron(): Promise<void> {
+    this.logger.log('Gatilho do agendador disparado — iniciando geração de relatório...');
+    try {
+      // await garante que erros sejam capturados aqui
+      await this.reportsService.generateWeeklyReport();
+      this.logger.log('Relatório gerado com sucesso.');
+    } catch (error) {
+      this.logger.error('Erro ao gerar relatório agendado:', error);
+    }
   }
 }

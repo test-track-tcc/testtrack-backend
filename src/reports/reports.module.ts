@@ -8,11 +8,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Report } from './entities/report.entity';
 import { ChartModule } from 'src/chart/chart.module';
 import { ReportsScheduler } from './reports.scheduler';
+import { PdfGeneratorModule } from 'src/pdf-generator/pdf-generator.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Report, TestCase, Project]),
     ChartModule,
+    PdfGeneratorModule,
   ],
   providers: [ReportsService, ReportsScheduler],
   controllers: [ReportsController]
