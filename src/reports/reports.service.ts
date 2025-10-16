@@ -95,7 +95,7 @@ export class ReportsService {
    */
   private async generateReportForProject(project: Project, startDate: Date, endDate: Date): Promise<void> {
     this.logger.log(`Gerando relatório para o projeto: "${project.name}" (ID: ${project.id})`);
-
+    
     // Cria um Map com a contagem de status dos casos de teste
     const statusesCountedMap = await this.countTestCasesByStatus(project.id, startDate, endDate);
     const statusesCountedString = JSON.stringify(Array.from(statusesCountedMap.entries()));
@@ -108,7 +108,12 @@ export class ReportsService {
     const filePath = await this.createFilePath(fileName);
     this.logger.log(`Caminho do arquivo do relatório: ${filePath}`);
     // Passa o nome do projeto para o gerador de PDF
-    await this.createPdf(filePath, reportData, startDate, endDate, project.name);
+    let isPdfCreated = await this.pdfGeneratorService.tryGenerateTestReportPdf(filePath, reportData, startDate, endDate, project.name);
+
+    if (!isPdfCreated) {
+      this.logger.error(`Falha ao gerar o PDF para o projeto "${project.name}". O relatório não será salvo.`);
+      return;
+    }
 
     // Salva o registro do relatório no banco de dados
     const newReport = this.reportRepository.create({

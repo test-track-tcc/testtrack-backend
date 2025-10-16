@@ -84,7 +84,7 @@ export class ChartService {
       id: 'centerText',
       afterDraw: (chart) => {
         const ctx = chart.ctx;
-        const centerX = chart.width / 3 ;
+        const centerX = chart.width / 2;
         const centerY = chart.height / 2;
 
         ctx.save();
@@ -94,12 +94,12 @@ export class ChartService {
         // Texto "Total"
         ctx.font = 'bold 30px sans-serif';
         ctx.fillStyle = '#666';
-        ctx.fillText('Total', centerX, centerY - 10);
+        ctx.fillText('Total', centerX, centerY - 45);
 
         // Texto "Testes"
         ctx.font = 'bold 30px sans-serif';
         ctx.fillStyle = '#666';
-        ctx.fillText('Testes', centerX, centerY + 20);
+        ctx.fillText('Testes', centerX, centerY + 45);
         ctx.restore();
       },
     };
@@ -126,38 +126,7 @@ export class ChartService {
           },
           // 3. Habilitamos e configuramos a legenda
           legend: {
-            display: true,
-            position: 'right', // Posiciona a legenda à direita
-            align: 'center',   // Alinha a legenda verticalmente ao centro
-            labels: {
-              boxWidth: 15, // Largura da caixa de cor
-              padding: 20,  // Espaçamento entre os itens
-              color: '#333',
-              font: {
-                size: 12,
-              },
-              // Função para formatar o texto de cada item da legenda
-              generateLabels: (chart) => {
-                const datasets = chart.data.datasets;
-                return datasets[0].data.map((value, i) => {
-                  let label = {};
-                  if (chart.data.labels) {
-                    label = chart.data.labels[i] ?? '';
-                  }
-                  const percentage = totalTests > 0 ? ((Number(value) / totalTests) * 100).toFixed(0) : 0;
-                  const backgroundColor = (datasets[0].backgroundColor as string[])[i];
-
-                  return {
-                    text: `${value} em ${label} (${percentage}%)`,
-                    fillStyle: backgroundColor,
-                    strokeStyle: backgroundColor,
-                    lineWidth: 1,
-                    hidden: false,
-                    index: i,
-                  };
-                });
-              },
-            },
+            display: false,
           },
         },
       },

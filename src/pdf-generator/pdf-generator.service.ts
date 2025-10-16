@@ -19,26 +19,26 @@ export class PdfGeneratorService {
    * Gera um PDF de relatório de testes e o salva no caminho especificado.
    * Lança uma exceção em caso de falha.
    */
-  public async generateTestReportPdf(
+  public async tryGenerateTestReportPdf(
     filePath: string,
     data: ReportData,
     startDate: Date,
     endDate: Date,
     projectName: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.logger.log(`Iniciando geração do PDF para o projeto "${projectName}" em "${filePath}"`);
 
     try {
       const chartBuffer = await this.chartService.createDonutChart(data.statuses);
 
       // A geração do PDF é envolvida por uma Promise para lidar com streams de forma assíncrona
-      await new Promise<void>((resolve, reject) => {
+      return await new Promise<boolean>((resolve, reject) => {
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
         const stream = fs.createWriteStream(filePath);
 
         doc.pipe(stream);
 
-        // --- Construção do Documento ---
+        // Construção do Documento
         this.buildPdfHeader(doc, projectName, startDate, endDate);
         this.buildPdfBody(doc, data, chartBuffer);
 
@@ -46,18 +46,18 @@ export class PdfGeneratorService {
 
         stream.on('finish', () => {
           this.logger.log(`PDF salvo com sucesso em "${filePath}"`);
-          resolve();
+          resolve(true);
         });
 
         stream.on('error', (err) => {
           this.logger.error(`Erro ao escrever o stream do PDF: ${err.message}`);
-          reject(err);
+          reject(false);
         });
       });
     } catch (error) {
       this.logger.error(`Falha ao gerar o PDF para o projeto "${projectName}". Erro: ${error.message}`, error.stack);
       // Lança uma exceção para que o serviço chamador (ReportsService) saiba que a operação falhou.
-      throw new InternalServerErrorException(`Falha ao gerar o arquivo PDF do relatório.`);
+      return false;
     }
   }
 
@@ -91,6 +91,7 @@ export class PdfGeneratorService {
     const totalTests = Array.from(data.statuses.values()).reduce((sum, current) => sum + current, 0);
 
     data.statuses.forEach((value, key) => {
+      if (value === 0) return; // Pula status com zero ocorrências
       const percentage = totalTests > 0 ? ((value / totalTests) * 100).toFixed(0) : 0;
       const color = this.chartService.statusColors[key] || '#6c757d';
 
@@ -104,42 +105,4 @@ export class PdfGeneratorService {
     });
   }
 
-    /**
-   * Cria o arquivo PDF com os dados do relatório.
-   */
-  private async createPdf(filePath: string, data: any, startDate: Date, endDate: Date, projectName: string): Promise<void> {
-    const chartBuffer = await this.chartService.createDonutChart(data.statuses);
-
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ size: 'A4', margin: 50 });
-      const stream = fs.createWriteStream(filePath);
-      
-      doc.pipe(stream);
-
-      doc.fontSize(25).text('Relatório Semanal de Testes', { align: 'center' });
-      doc.moveDown(0.5);
-      doc.fontSize(20).text(`Projeto: ${projectName}`, { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(16).text(`Período: ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}`);
-      doc.moveDown(2);
-
-      doc.fontSize(18).text('Resumo dos Resultados:', { underline: true });
-      doc.moveDown();
-        
-      const chartX = doc.x;
-      const chartY = doc.y;
-      const chartWidth = 250;
-      
-      doc.image(chartBuffer, chartX, chartY, {
-        fit: [chartWidth, chartWidth],
-        align: 'center',
-        valign: 'center',
-      });
-
-      doc.end();
-      
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-    });
-  }
 }
