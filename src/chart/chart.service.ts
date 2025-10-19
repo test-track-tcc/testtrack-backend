@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
 import { TestCaseStatus } from 'src/config/enums';
@@ -8,12 +8,12 @@ import { TestCase } from 'src/test-case/entities/test-case.entity';
 @Injectable()
 export class ChartService {
   public readonly statusColors = {
-    [TestCaseStatus.APPROVED]: '#28a745', // Verde
-    [TestCaseStatus.REPROVED]: '#dc3545',   // Vermelho
-    [TestCaseStatus.PENDING]: '#ffc107',  // Amarelo
-    [TestCaseStatus.NOT_STARTED]: '#007bff', // Azul
-    [TestCaseStatus.BLOCKED]: '#b07bd3ff', // Cinza
-    [TestCaseStatus.IN_PROGRESS]: '#17a2b8', // Ciano
+    [TestCaseStatus.APPROVED]: '#377b1f', // Verde
+    [TestCaseStatus.REPROVED]: '#c24646',   // Vermelho
+    [TestCaseStatus.PENDING]: '#17a2b8',  // Amarelo
+    [TestCaseStatus.NOT_STARTED]: '#3745aa', // Azul
+    [TestCaseStatus.BLOCKED]: '#9268ad',//'#9268adff', // Cinza
+    [TestCaseStatus.IN_PROGRESS]: '#ffd446', // Ciano
     [TestCaseStatus.FINISHED]: '#fd7e14', // Laranja
     [TestCaseStatus.CANCELED]: '#343a40', // Preto
   };
@@ -69,16 +69,17 @@ export class ChartService {
 
 
   public async createDonutChart(data: Map<string, number>): Promise<Buffer> {
-    // 1. Aumentamos a largura para acomodar a legenda ao lado
     const width = 600;
     const height = 600;
 
     const labels = Array.from(data.keys());
     const values = Array.from(data.values());
+    Logger.log('Labels para o gráfico: ' + labels.join(', '));
+    Logger.log('Values para o gráfico: ' + values.join(', '));
     const backgroundColors = labels.map(label => this.statusColors[label] || '#6c757d');
     const totalTests = values.reduce((sum, current) => sum + current, 0);
 
-    // --- PLUGIN CUSTOMIZADO PARA O TEXTO CENTRAL ---
+    // PLUGIN CUSTOMIZADO PARA O TEXTO CENTRAL
     // Este plugin desenha o texto "Total Testes" no centro do gráfico.
     const centerTextPlugin = {
       id: 'centerText',
@@ -120,17 +121,15 @@ export class ChartService {
       options: {
         responsive: false,
         plugins: {
-          // 2. Desabilitamos o título superior
           title: {
             display: false,
           },
-          // 3. Habilitamos e configuramos a legenda
           legend: {
             display: false,
           },
         },
       },
-      // 4. Registramos nosso plugin customizado
+      // Registramos nosso plugin customizado
       plugins: [centerTextPlugin],
     };
 

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { Report } from './entities/report.entity';
@@ -119,7 +119,7 @@ export class ReportsService {
     const newReport = this.reportRepository.create({
       fileName,
       filePath,
-      //project: project, //dá pra criar uma relação se quiser entre relatório e projeto
+      project: project,
     });
     
     await this.reportRepository.save(newReport);
@@ -181,7 +181,7 @@ export class ReportsService {
     });
   }
 
-    /**
+  /**
    * Busca todos os relatórios disponíveis.
    */
   async findAll(): Promise<Report[]> {
@@ -193,9 +193,11 @@ export class ReportsService {
    */
   async findOne(id: string): Promise<Report> {
     const report = await this.reportRepository.findOneBy({ id });
+
     if (!report) {
-      throw new Error('Relatório não encontrado');
+      throw new NotFoundException(`Relatório com ID "${id}" não encontrado.`);
     }
+
     return report;
   }
 

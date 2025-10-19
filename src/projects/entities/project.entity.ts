@@ -9,6 +9,7 @@ import { Permission } from 'src/permission/entities/permission.entity';
 import { IsNotEmpty } from 'class-validator';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
+import { Report } from 'src/reports/entities/report.entity';
 
 @Entity('projects')
 export class Project {
@@ -82,6 +83,9 @@ export class Project {
   @IsNotEmpty({ message: 'O projeto associado não pode estar vazio.' })
   @JoinColumn()
   permission: Permission;
+
+  @OneToMany(() => Report, (report) => report.project, { cascade: true })
+  reports: Report[];
 
   constructor() {
     if (!this.id) {

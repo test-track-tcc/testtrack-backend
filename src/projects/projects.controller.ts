@@ -53,6 +53,11 @@ export class ProjectsController {
     return this.projectsService.findUsersByProject(id);
   }
 
+  @Get(':id/reports')
+  findReportsByProject(@Param('id') id: string) {
+    return this.projectsService.findReportsByProject(id);
+  }
+
   @Post(':projectId/users')
   @ApiOperation({ summary: 'Adiciona um usuário a um projeto específico' })
   addUserToProject(

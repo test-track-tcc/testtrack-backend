@@ -13,6 +13,7 @@ import { Organization } from 'src/organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
 import { Permission } from 'src/permission/entities/permission.entity';
+import { Report } from 'src/reports/entities/report.entity';
 
 function generatePrefix(name: string): string {
   return name
@@ -36,6 +37,8 @@ export class ProjectsService {
     private projectUsersRepository: Repository<ProjectUser>,
     @InjectRepository(Permission)
     private permissionRepo: Repository<Permission>,
+    @InjectRepository(Report)
+    private reportsRepository: Repository<Report>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -313,6 +316,13 @@ export class ProjectsService {
     return this.projectUsersRepository.find({
       where: { project: { id: projectId } },
       relations: ['user'],
+    });
+  }
+
+  async findReportsByProject(projectId: string): Promise<Report[]> {
+    return this.reportsRepository.find({
+      where: { project: { id: projectId } },
+      relations: ['project'],
     });
   }
 }

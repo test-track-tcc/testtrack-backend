@@ -62,7 +62,7 @@ export class PdfGeneratorService {
   }
 
   private buildPdfHeader(doc: PDFKit.PDFDocument, projectName: string, startDate: Date, endDate: Date): void {
-    doc.fontSize(25).text('Relatório Semanal de Testes', { align: 'center' });
+    doc.fontSize(25).text('Relatório Semanal de Testes', { align: 'center'});
     doc.moveDown(0.5);
     doc.fontSize(20).text(`Projeto: ${projectName}`, { align: 'center' });
     doc.moveDown();
@@ -85,7 +85,7 @@ export class PdfGeneratorService {
     const legendX = chartX + chartWidth + 30;
     const legendY = chartY;
 
-    doc.fontSize(18).text('Resumo dos Resultados:', legendX, legendY);
+    //doc.fontSize(18).text('Resumo dos Resultados:', legendX, legendY);
     let currentY = legendY + 30;
 
     const totalTests = Array.from(data.statuses.values()).reduce((sum, current) => sum + current, 0);
@@ -97,9 +97,7 @@ export class PdfGeneratorService {
 
       doc.rect(legendX, currentY, 12, 12).fill(color);
       
-      doc.fillColor('black')
-         .fontSize(12)
-         .text(`${value} ${key} (${percentage}%)`, legendX + 20, currentY);
+      doc.fillColor('black').fontSize(12).text(`${value} ${key} (${percentage}%)`, legendX + 20, currentY);
       
       currentY += 25;
     });
