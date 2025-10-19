@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Req } from '@nestjs/common';
+import { Controller, Get, Param, Patch } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
@@ -7,10 +7,9 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Get()
-  @ApiOperation({ summary: 'Busca as notificações do usuário logado' })
-  async getMyNotifications(@Req() req) {
-    const userId = req.user.id;
+  @Get('user/:userId')
+  @ApiOperation({ summary: 'Busca as notificações de um usuário' })
+  async getMyNotifications(@Param('userId') userId: string) {
     return this.notificationService.getUserNotifications(userId);
   }
 

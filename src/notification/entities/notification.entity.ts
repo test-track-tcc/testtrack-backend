@@ -34,4 +34,7 @@ export class Notification {
 
   @Column({ nullable: true })
   link?: string;
+
+  @Column({ nullable: true })
+  actionId?: string;
 }

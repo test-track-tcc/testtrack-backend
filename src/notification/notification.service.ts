@@ -11,12 +11,13 @@ export class NotificationService {
     private notificationRepository: Repository<Notification>,
   ) {}
 
-  async create(user: User, message: string, type: NotificationType, link?: string): Promise<Notification> {
+  async create(user: User, message: string, type: NotificationType, link?: string, actionId?: string): Promise<Notification> {
     const notification = this.notificationRepository.create({
       user,
       message,
       type,
       link,
+      actionId,
     });
     return this.notificationRepository.save(notification);
   }
