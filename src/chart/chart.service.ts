@@ -74,8 +74,6 @@ export class ChartService {
 
     const labels = Array.from(data.keys());
     const values = Array.from(data.values());
-    Logger.log('Labels para o gráfico: ' + labels.join(', '));
-    Logger.log('Values para o gráfico: ' + values.join(', '));
     const backgroundColors = labels.map(label => this.statusColors[label] || '#6c757d');
     const totalTests = values.reduce((sum, current) => sum + current, 0);
 

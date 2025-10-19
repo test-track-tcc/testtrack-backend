@@ -62,7 +62,7 @@ export class PdfGeneratorService {
   }
 
   private buildPdfHeader(doc: PDFKit.PDFDocument, projectName: string, startDate: Date, endDate: Date): void {
-    doc.fontSize(25).text('Relatório Semanal de Testes', { align: 'center'});
+    doc.fontSize(25).text('Relatório de Testes', { align: 'center'});
     doc.moveDown(0.5);
     doc.fontSize(20).text(`Projeto: ${projectName}`, { align: 'center' });
     doc.moveDown();

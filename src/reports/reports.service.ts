@@ -52,9 +52,19 @@ export class ReportsService {
     }
   }
 
-  /**
-   * Conta quantos casos de teste existem para cada status dentro de um período específico.
-   */
+  async generatePersonalizedIntervalReport(projectId: string, startDate: Date, endDate: Date): Promise<void> {
+    this.logger.log(`Iniciando geração de relatório personalizado para o projeto ID: ${projectId} no período de ${startDate.toISOString()} a ${endDate.toISOString()}`);
+
+    const project = await this.projectRepository.findOneBy({ id: projectId });
+
+    if (!project) {
+      this.logger.error(`Projeto com ID: ${projectId} não encontrado.`);
+      throw new NotFoundException(`Projeto com ID: ${projectId} não encontrado.`);
+    }
+    
+    await this.generateReportForProject(project, startDate, endDate);
+  }
+
   private async countTestCasesByStatus(projectId: string, startDate: Date, endDate: Date): Promise<Map<string, number>> {
 
     // A partir do enum TestCaseStatus, contamos quantos casos de teste existem para cada status

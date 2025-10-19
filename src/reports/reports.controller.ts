@@ -33,10 +33,24 @@ export class ReportsController {
     return new StreamableFile(file);
   }
 
-    @Get('trigger-manual-report')
-    @ApiOperation({ summary: 'Dispara manualmente a geração do relatório semanal' })
-    async triggerManualReport() {
-        await this.reportsService.generateWeeklyReport();
-        return { message: 'Geração de relatórios iniciada. Verifique os logs e a pasta public/reports.' };
-    }
+  @Get('trigger-all-projects-manual-report')
+  @ApiOperation({ summary: 'Dispara manualmente a geração do relatório semanal' })
+  async triggerManualReport() {
+      await this.reportsService.generateWeeklyReport();
+      return { message: 'Geração de relatórios iniciada. Verifique os logs e a pasta private/reports.' };
+  }
+
+  @Get('trigger-personalized-report/:projectId/:startDate/:endDate')
+  @ApiOperation({ summary: 'Dispara manualmente a geração de um relatório personalizado para um projeto e intervalo' })
+  async triggerPersonalizedReport(
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('startDate') startDateStr: string,
+    @Param('endDate') endDateStr: string,
+  ) {
+      // Converte as strings de data para objetos Date, DETALHE! Não há validação avançada aqui!!!
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+      await this.reportsService.generatePersonalizedIntervalReport(projectId, startDate, endDate);
+      return { message: 'Geração de relatório personalizado iniciada. Verifique os logs e a pasta private/reports.' };
+  }
 }
