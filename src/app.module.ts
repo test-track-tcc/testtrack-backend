@@ -16,6 +16,7 @@ import { PermissionModule } from './permission/permission.module';
 import { AccessGroupModule } from './access-group/access-group.module';
 import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
 import { TestScenarioModule } from './test-scenario/test-scenario.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -58,7 +59,8 @@ import { TestScenarioModule } from './test-scenario/test-scenario.module';
     PermissionModule,
     AccessGroupModule,
     CustomTestTypesModule,
-    TestScenarioModule
+    TestScenarioModule,
+    CommentModule
   ],
   controllers: [AppController],
   providers: [AppService],

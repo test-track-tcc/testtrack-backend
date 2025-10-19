@@ -1,12 +1,14 @@
 import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
-import { TestType, Priority, TestCaseStatus } from '../../config/enums';
+import { TestType, Priority, TestCaseStatus, FunctionalTestFramework } from '../../config/enums';
+import { DeviceType } from 'src/enum/deviceType';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Script } from './script.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 import { TestScenario } from 'src/test-scenario/entities/test-scenario.entity';
+import { Comment } from '../../comment/entities/comment.entity';
 
 @Entity('test_cases')
 export class TestCase {
@@ -91,8 +93,8 @@ export class TestCase {
     isArray: true,
     example: ['Comentário 1', 'Comentário 2'],
   })
-  @Column('json', { nullable: true })
-  comments: { idUser: string; comment: string; date: Date }[];
+  @OneToMany(() => Comment, comment => comment.testCase, { cascade: true, eager: true })
+  comments: Comment[];
 
   @ApiProperty({
     description:
@@ -117,6 +119,27 @@ export class TestCase {
   })
   @JoinColumn({ name: 'testScenarioId' })
   testScenario: TestScenario;
+
+  @ApiProperty({
+    description: 'Target device for the test',
+    enum: DeviceType,
+    example: DeviceType.DESKTOP,
+    required: false,
+  })
+  @Column({ type: 'enum', enum: DeviceType, nullable: true })
+  targetDevice: DeviceType;
+
+  @ApiProperty({ description: 'Custom target device if "Other" is selected', example: 'Smart TV', required: false })
+  @Column({ length: 255, nullable: true })
+  customTargetDevice: string;
+
+  @ApiProperty({ description: 'Framework de teste funcional, se aplicável', enum: FunctionalTestFramework, required: false })
+  @Column({
+    type: 'enum',
+    enum: FunctionalTestFramework,
+    nullable: true,
+  })
+  functionalFramework: FunctionalTestFramework | null;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

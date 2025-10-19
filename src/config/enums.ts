@@ -28,3 +28,9 @@ export enum TestCaseStatus {
   CANCELED = 'CANCELADO',
   FINISHED = 'CONCLUIDO',
 }
+
+export enum FunctionalTestFramework {
+  SELENIUM = 'SELENIUM',
+  CYPRESS = 'CYPRESS',
+  ROBOT_FRAMEWORK = 'ROBOT_FRAMEWORK',
+}

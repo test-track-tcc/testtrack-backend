@@ -32,7 +32,7 @@ export class TestCasesController {
     @Body() createTestCaseDto: CreateTestCaseDto,
   ): Promise<TestCase> {
     
-    const fieldsToParse = ['comments', 'attachments'];
+    const fieldsToParse = ['attachments'];
     for (const field of fieldsToParse) {
       if (createTestCaseDto[field] && typeof createTestCaseDto[field] === 'string') {
         try {
@@ -96,7 +96,7 @@ export class TestCasesController {
     @UploadedFiles() files: { scripts?: Express.Multer.File[] },
     @Body() updateTestCaseDto: UpdateTestCaseDto,
   ): Promise<TestCase> {
-    const fieldsToParse = ['comments', 'attachments'];
+    const fieldsToParse = ['attachments'];
     for (const field of fieldsToParse) {
         if (updateTestCaseDto[field] && typeof updateTestCaseDto[field] === 'string') {
             try {
