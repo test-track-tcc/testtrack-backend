@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException, NotFoundException} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { Report } from './entities/report.entity';
@@ -61,7 +61,7 @@ export class ReportsService {
       this.logger.error(`Projeto com ID: ${projectId} não encontrado.`);
       throw new NotFoundException(`Projeto com ID: ${projectId} não encontrado.`);
     }
-    
+
     await this.generateReportForProject(project, startDate, endDate);
   }
 
@@ -117,12 +117,13 @@ export class ReportsService {
     const fileName = `Relatorio-${project.name.replace(/\s/g, '_')}-${endDate.toISOString().split('T')[0]}.pdf`;
     const filePath = await this.createFilePath(fileName);
     this.logger.log(`Caminho do arquivo do relatório: ${filePath}`);
-    // Passa o nome do projeto para o gerador de PDF
-    let isPdfCreated = await this.pdfGeneratorService.tryGenerateTestReportPdf(filePath, reportData, startDate, endDate, project.name);
 
-    if (!isPdfCreated) {
-      this.logger.error(`Falha ao gerar o PDF para o projeto "${project.name}". O relatório não será salvo.`);
-      return;
+    // Passa o nome do projeto para o gerador de PDF
+    try {
+      await this.pdfGeneratorService.tryGenerateTestReportPdf(filePath, reportData, startDate, endDate, project.name);
+    } catch (error) {
+      this.logger.error(`Falha ao gerar o PDF para o projeto "${project.name}". Erro: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(`Falha ao gerar o arquivo PDF do relatório.`);
     }
 
     // Salva o registro do relatório no banco de dados
