@@ -13,6 +13,8 @@ import { Organization } from 'src/organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
 import { Permission } from 'src/permission/entities/permission.entity';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/notification/entities/notification.entity';
 
 function generatePrefix(name: string): string {
   return name
@@ -37,6 +39,7 @@ export class ProjectsService {
     @InjectRepository(Permission)
     private permissionRepo: Repository<Permission>,
     private readonly dataSource: DataSource,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
@@ -103,42 +106,6 @@ export class ProjectsService {
       return savedProject;
     });
   }
-
-
-// Mantive o seu no código porque pode ser útil para comparar depois e garantir que o meu não dá erros.
-
-
-//  async createDoDiogo(createProjectDto: CreateProjectDto): Promise<Project> {
-//    const { name, description, organizationId, ownerId } = createProjectDto;
-//
-//    const organization = await this.organizationsRepository.findOne({ where: { id: organizationId } });
-//    if (!organization) {
-//      throw new NotFoundException(`Organization with ID "${organizationId}" not found`);
-//    }
-//
-//    const owner = await this.usersRepository.findOne({ where: { id: ownerId } });
-//    if (!owner) {
-//      throw new NotFoundException(`User with ID "${ownerId}" not found`);
-//    }
-//
-//    const project = this.projectsRepository.create({
-//      name,
-//      description,
-//      organization,
-//      owner,
-//    });
-//
-//    const savedProject = await this.projectsRepository.save(project);
-//
-//    const projectUser = this.projectUsersRepository.create({
-//      project: savedProject,
-//      user: owner,
-//      role: ProjectRole.ADMIN,
-//    });
-//    await this.projectUsersRepository.save(projectUser);
-//
-//    return savedProject;
-//  }
 
   findAll(): Promise<Project[]> {
     return this.projectsRepository.find({
@@ -242,59 +209,70 @@ export class ProjectsService {
   }
 
   async addUserToProject(
-  projectId: string,
-  addUserToProjectDto: AddUserToProjectDto,
-): Promise<ProjectUser> {
-  const { userId } = addUserToProjectDto;
+    projectId: string,
+    addUserToProjectDto: AddUserToProjectDto,
+  ): Promise<ProjectUser> {
+    const { userId } = addUserToProjectDto;
 
-  const project = await this.projectsRepository.findOne({
-    where: { id: projectId },
-    relations: ['organization'], // Carrega a organização do projeto
-  });
+    const project = await this.projectsRepository.findOne({
+      where: { id: projectId },
+      relations: ['organization'],
+    });
 
-  if (!project) {
-    throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado`);
-  }
+    if (!project) {
+      throw new NotFoundException(`Projeto com ID "${projectId}" não encontrado`);
+    }
 
-  const user = await this.usersRepository.findOne({
-    where: { id: userId },
-    relations: ['organizationUsers', 'organizationUsers.organization'], 
-  });
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['organizationUsers', 'organizationUsers.organization'],
+    });
 
-  if (!user) {
-    throw new NotFoundException(`Utilizador com ID "${userId}" não encontrado`);
-  }
-  
-  const isUserInOrg = user.organizationUsers.some(
-    (orgUser) => orgUser.organization.id === project.organization.id,
-  );
+    if (!user) {
+      throw new NotFoundException(`Utilizador com ID "${userId}" não encontrado`);
+    }
 
-  if (!isUserInOrg) {
-    throw new BadRequestException(
-      `O utilizador ${user.name} não pertence à organização "${project.organization.name}".`,
+    const isUserInOrg = user.organizationUsers.some(
+      (orgUser) => orgUser.organization.id === project.organization.id,
+    );
+
+    if (!isUserInOrg) {
+      throw new BadRequestException(
+        `O utilizador ${user.name} não pertence à organização "${project.organization.name}".`,
+      );
+    }
+
+    const existingProjectUser = await this.projectUsersRepository.findOne({
+      where: {
+        project: { id: projectId },
+        user: { id: userId },
+      },
+    });
+
+    if (existingProjectUser) {
+      throw new BadRequestException(
+        `O utilizador ${user.name} já faz parte deste projeto.`,
+      );
+    }
+
+    const newProjectUser = this.projectUsersRepository.create({
+      project,
+      user,
+    });
+
+    const savedProjectUser = await this.projectUsersRepository.save(newProjectUser);
+
+    // --- LÓGICA DE NOTIFICAÇÃO (RQ31) ---
+    await this.notificationService.create(
+      user, // O usuário que foi adicionado
+      `Você foi atribuído ao projeto "${project.name}".`,
+      NotificationType.PROJECT_ASSIGNMENT, // (Verifique seu Enum)
+      `/projects/${project.id}` // Link para o projeto
     );
-  }
+    // --- FIM DA LÓGICA ---
 
-  const existingProjectUser = await this.projectUsersRepository.findOne({
-    where: {
-      project: { id: projectId },
-      user: { id: userId },
-    },
-  });
-
-  if (existingProjectUser) {
-    throw new BadRequestException(
-      `O utilizador ${user.name} já faz parte deste projeto.`,
-    );
-  }
-  
-  const newProjectUser = this.projectUsersRepository.create({
-    project,
-    user,
-  });
-
-  return this.projectUsersRepository.save(newProjectUser);
-}
+    return savedProjectUser;
+  }
 
   async removeUserFromProject(projectId: string, userId: string): Promise<void> {
     const result = await this.projectUsersRepository.delete({
