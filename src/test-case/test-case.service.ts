@@ -11,6 +11,7 @@ import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationType } from 'src/notification/entities/notification.entity';
 import { TestCaseStatus } from 'src/config/enums';
+import { BugsService } from 'src/bugs/bugs.service';
 
 @Injectable()
 export class TestCasesService {
@@ -21,7 +22,8 @@ export class TestCasesService {
     @InjectRepository(CustomTestType)
     private customTestTypeRepository: Repository<CustomTestType>,
     private readonly notificationService: NotificationService,
-  ) {}
+    private readonly bugsService: BugsService
+  ) { }
 
   private readonly relationsToLoad = [
     'project',
@@ -40,6 +42,7 @@ export class TestCasesService {
         responsibleId,
         customTestTypeId,
         testScenarioId,
+        bugResponsibleId,
         scripts: scriptPaths,
         ...testCaseData
       } = createTestCaseDto;
@@ -66,6 +69,7 @@ export class TestCasesService {
         responsible,
         testScenarioId: testScenarioId || null,
         projectSequenceId: project.testCaseSequence,
+        bugResponsibleId: bugResponsibleId || null,
       });
 
       if (customTestTypeId) {
@@ -102,31 +106,48 @@ export class TestCasesService {
     }
 
     if (newTestCase.status === TestCaseStatus.REPROVED) {
-      const message = `O caso de teste "${newTestCase.title}" falhou.`;
-      const link = `/projects/${newTestCase.project.id}/test-cases/${newTestCase.id}`;
+      const message = `O caso de teste "${newTestCase.title}" falhou.`;
+      const link = `/projects/${newTestCase.project.id}/test-cases/${newTestCase.id}`;
 
-      if (newTestCase.createdBy) {
-        await this.notificationService.create(
-          newTestCase.createdBy,
-          message,
-          NotificationType.TEST_CASE_FAILED,
-          link,
+      if (newTestCase.createdBy) {
+        await this.notificationService.create(
+          newTestCase.createdBy,
+          message,
+          NotificationType.TEST_CASE_FAILED,
+          link,
+        );
+      }
+
+      if (newTestCase.project && newTestCase.project.projectUsers) {
+        for (const member of newTestCase.project.projectUsers) {
+          if (member.user && (!newTestCase.createdBy || String(member.user.id) !== String(newTestCase.createdBy.id))) {
+            await this.notificationService.create(
+              member.user,
+              message,
+              NotificationType.TEST_CASE_FAILED,
+              link,
+            );
+          }
+        }
+      }
+    }
+
+    if (newTestCase.status === TestCaseStatus.REPROVED && newTestCase.bugResponsibleId) {
+      try {
+        await this.bugsService.create({
+          title: `Caso de Teste com Falha: ${newTestCase.project.prefix}-${newTestCase.projectSequenceId} ${newTestCase.title}`,
+          description: `Test case "${newTestCase.title}" failed execution.\n\nDescription: ${newTestCase.description}\n\nSteps: ${newTestCase.steps}\n\nExpected Result: ${newTestCase.expectedResult}`,
+          priority: newTestCase.priority,
+          testCaseId: newTestCase.id,
+          assignedDeveloperId: newTestCase.bugResponsibleId, 
+        });
+      } catch (error) {
+        console.error(
+          `Failed to automatically create bug for test case ${newTestCase.id} during creation:`,
+          error,
         );
       }
-
-      if (newTestCase.project && newTestCase.project.projectUsers) {
-        for (const member of newTestCase.project.projectUsers) {
-          if (member.user && (!newTestCase.createdBy || String(member.user.id) !== String(newTestCase.createdBy.id))) {
-            await this.notificationService.create(
-              member.user,
-              message,
-              NotificationType.TEST_CASE_FAILED,
-              link,
-            );
-          }
-        }
-      }
-    }
+    }
     return this.findOne(newTestCase.id);
   }
 
@@ -150,102 +171,119 @@ export class TestCasesService {
     return testCase;
   }
 
-  async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
-    const currentTestCase = await this.testCasesRepository.findOne({
-      where: { id },
-      relations: [
-        'createdBy',
-        'responsible',
-        'project',
-        'project.projectUsers',
+  async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
+    const currentTestCase = await this.testCasesRepository.findOne({
+      where: { id },
+      relations: [
+        'createdBy',
+        'responsible',
+        'project',
+        'project.projectUsers',
         'project.projectUsers.user',
-      ],
-    });
+      ],
+    });
 
-    if (!currentTestCase) {
-      throw new NotFoundException(`Test case with ID "${id}" not found.`);
-    }
+    if (!currentTestCase) {
+      throw new NotFoundException(`Test case with ID "${id}" not found.`);
+    }
 
-    const oldStatus = currentTestCase.status;
-    const oldResponsibleId = currentTestCase.responsible?.id;
+    const oldStatus = currentTestCase.status;
+    const oldResponsibleId = currentTestCase.responsible?.id;
 
-    const { 
-      scripts, 
-      customTestTypeId, 
-      testScenarioId, 
-      responsibleId,
-      ...restDto 
-    } = updateTestCaseDto;
+    const {
+      scripts,
+      customTestTypeId,
+      testScenarioId,
+      responsibleId,
+      bugResponsibleId,
+      ...restDto
+    } = updateTestCaseDto;
 
     Object.assign(currentTestCase, restDto);
     currentTestCase.testScenarioId = testScenarioId ?? currentTestCase.testScenarioId;
+    currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
 
     const testCaseToUpdate = currentTestCase;
 
-    if (responsibleId) {
-      const responsibleUser = await this.dataSource.getRepository(User).findOneBy({ id: responsibleId });
-      if (!responsibleUser) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
-      testCaseToUpdate.responsible = responsibleUser;
-    } else if (responsibleId === null) {
-      testCaseToUpdate.responsible = null;
-    }
+    if (responsibleId) {
+      const responsibleUser = await this.dataSource.getRepository(User).findOneBy({ id: responsibleId });
+      if (!responsibleUser) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+      testCaseToUpdate.responsible = responsibleUser;
+    } else if (responsibleId === null) {
+      testCaseToUpdate.responsible = null;
+    }
 
+    if (customTestTypeId) {
+      const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
+      if (!customTestType) {
+        throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
+      }
+      testCaseToUpdate.customTestType = customTestType;
+      testCaseToUpdate.testType = null;
+    } else if (restDto.testType) {
+      testCaseToUpdate.customTestType = null;
+    }
 
-    if (customTestTypeId) {
-      const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
-      if (!customTestType) {
-        throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
-      }
-      testCaseToUpdate.customTestType = customTestType;
-      testCaseToUpdate.testType = null;
-    } else if (restDto.testType) {
-      testCaseToUpdate.customTestType = null;
-    }
+    const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
 
-    const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
+    const newStatus = updatedTestCase.status;
+    if (oldStatus !== newStatus && newStatus === TestCaseStatus.REPROVED) {
+      const message = `O caso de teste "${updatedTestCase.title}" falhou.`;
+      const link = `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`;
 
+      if (currentTestCase.createdBy) {
+        await this.notificationService.create(
+          currentTestCase.createdBy,
+          message,
+          NotificationType.TEST_CASE_FAILED,
+          link,
+        );
+      }
 
-    const newStatus = updatedTestCase.status;
-    if (oldStatus !== newStatus && newStatus === TestCaseStatus.REPROVED) { 
-      const message = `O caso de teste "${updatedTestCase.title}" falhou.`;
-      const link = `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`;
+      if (currentTestCase.project && currentTestCase.project.projectUsers) {
+        for (const member of currentTestCase.project.projectUsers) {
+          if (member.user && (!currentTestCase.createdBy || String(member.user.id) !== String(currentTestCase.createdBy.id))) {
+            await this.notificationService.create(
+              member.user,
+              message,
+              NotificationType.TEST_CASE_FAILED,
+              link,
+            );
+          }
+        }
+      }
 
-      if (currentTestCase.createdBy) {
-        await this.notificationService.create(
-          currentTestCase.createdBy,
-          message,
-          NotificationType.TEST_CASE_FAILED,
-          link,
-        );
-      }
-
-      if (currentTestCase.project && currentTestCase.project.projectUsers) {
-        for (const member of currentTestCase.project.projectUsers) {
-          if (member.user && (!currentTestCase.createdBy || String(member.user.id) !== String(currentTestCase.createdBy.id))) {
-            await this.notificationService.create(
-              member.user,
-              message,
-              NotificationType.TEST_CASE_FAILED,
-              link,
-            );
-          }
+      if (updatedTestCase.bugResponsibleId) {
+        try {
+          await this.bugsService.create({
+            title: `Caso de Teste com Falha: ${updatedTestCase.project.prefix}-${updatedTestCase.projectSequenceId}${updatedTestCase.title}`,
+            description: `Test case "${updatedTestCase.title}" failed execution.\n\nDescription: ${updatedTestCase.description}\n\nSteps: ${updatedTestCase.steps}\n\nExpected Result: ${updatedTestCase.expectedResult}`,
+            priority: updatedTestCase.priority,
+            testCaseId: updatedTestCase.id,
+            assignedDeveloperId: updatedTestCase.bugResponsibleId,
+          });
+        } catch (error) {
+          console.error(
+            `Failed to automatically create bug for test case ${updatedTestCase.id} during update:`,
+            error,
+          );
         }
       }
-    }
+    }
 
-    const newResponsibleId = updatedTestCase.responsible?.id;
+    const newResponsibleId = updatedTestCase.responsible?.id;
 
-    if (newResponsibleId && newResponsibleId !== oldResponsibleId && updatedTestCase.responsible) {
-      await this.notificationService.create(
-        updatedTestCase.responsible,
-        `Você foi atribuído ao caso de teste "${updatedTestCase.title}".`,
-        NotificationType.TEST_CASE_ASSIGNMENT,
-        `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`
-      );
-    }
+    if (newResponsibleId && newResponsibleId !== oldResponsibleId && updatedTestCase.responsible) {
+      await this.notificationService.create(
+        updatedTestCase.responsible,
+        `Você foi atribuído ao caso de teste "${updatedTestCase.title}".`,
+        NotificationType.TEST_CASE_ASSIGNMENT,
+        `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`
+      );
+    }
 
-    return this.findOne(id);
-  }
+    return this.findOne(id);
+  }
 
   async remove(id: string): Promise<void> {
     const result = await this.testCasesRepository.delete(id);

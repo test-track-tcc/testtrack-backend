@@ -17,4 +17,8 @@ export class CreateBugDto {
   @IsUUID()
   @IsNotEmpty()
   testCaseId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  assignedDeveloperId: string;
 }
