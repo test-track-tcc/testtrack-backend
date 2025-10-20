@@ -30,6 +30,7 @@ export class TestCasesService {
     'createdBy',
     'responsible',
     'customTestType',
+    'bugResponsible',
     'scripts',
     'testScenario',
   ];
