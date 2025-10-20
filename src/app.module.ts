@@ -18,6 +18,7 @@ import { CustomTestTypesModule } from './custom-test-types/custom-test-type.modu
 import { TestScenarioModule } from './test-scenario/test-scenario.module';
 import { CommentModule } from './comment/comment.module';
 import { BugsModule } from './bugs/bugs.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -62,7 +63,8 @@ import { BugsModule } from './bugs/bugs.module';
     CustomTestTypesModule,
     TestScenarioModule,
     CommentModule,
-    BugsModule
+    BugsModule,
+    NotificationModule
   ],
   controllers: [AppController],
   providers: [AppService],
