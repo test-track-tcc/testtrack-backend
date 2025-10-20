@@ -7,9 +7,12 @@ import { Script } from './entities/script.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
+import { BugsModule } from 'src/bugs/bugs.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TestCase, Script, Project, User, CustomTestType])],
+  imports: [TypeOrmModule.forFeature([TestCase, Script, Project, User, CustomTestType]),
+  BugsModule
+],
   providers: [TestCasesService],
   controllers: [TestCasesController],
 })
