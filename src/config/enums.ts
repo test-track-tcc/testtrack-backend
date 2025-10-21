@@ -34,3 +34,11 @@ export enum FunctionalTestFramework {
   CYPRESS = 'CYPRESS',
   ROBOT_FRAMEWORK = 'ROBOT_FRAMEWORK',
 }
+
+export enum BugStatus {
+  OPEN = 'ABERTO',
+  IN_PROGRESS = 'EM_ANDAMENTO',
+  FIXED = 'CORRIGIDO',
+  CLOSED = 'FECHADO',
+  REOPENED = 'REABERTO',
+}

@@ -141,6 +141,13 @@ export class TestCase {
   })
   functionalFramework: FunctionalTestFramework | null;
 
+  @Column({ type: 'uuid', nullable: true })
+  bugResponsibleId: string | null;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'bugResponsibleId' })
+  bugResponsible: User;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

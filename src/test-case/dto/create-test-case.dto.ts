@@ -95,4 +95,8 @@ export class CreateTestCaseDto {
   @IsOptional()
   @IsEnum(FunctionalTestFramework)
   functionalFramework?: FunctionalTestFramework;
+
+  @IsOptional()
+  @IsUUID()
+  bugResponsibleId?: string;
 }

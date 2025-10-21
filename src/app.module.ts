@@ -18,6 +18,7 @@ import { CustomTestTypesModule } from './custom-test-types/custom-test-type.modu
 import { TestScenarioModule } from './test-scenario/test-scenario.module';
 import { CommentModule } from './comment/comment.module';
 import { NotificationModule } from './notification/notification.module';
+import { BugsModule } from './bugs/bugs.module';
 
 @Module({
   imports: [
@@ -35,7 +36,7 @@ import { NotificationModule } from './notification/notification.module';
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
+        synchronize: false,
       }),
       inject: [ConfigService],
     }),
@@ -62,7 +63,9 @@ import { NotificationModule } from './notification/notification.module';
     CustomTestTypesModule,
     TestScenarioModule,
     CommentModule,
-    NotificationModule
+    BugsModule,
+    NotificationModule,
+    BugsModule
   ],
   controllers: [AppController],
   providers: [AppService],
