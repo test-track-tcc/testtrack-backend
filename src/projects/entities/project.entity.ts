@@ -10,6 +10,7 @@ import { IsNotEmpty } from 'class-validator';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
 import { Report } from 'src/reports/entities/report.entity';
+import { TestScenario } from 'src/test-scenario/entities/test-scenario.entity';
 
 @Entity('projects')
 export class Project {
@@ -47,6 +48,12 @@ export class Project {
   @ApiProperty({ description: 'Data de conclusão do projeto', example: '2025-12-15' })
   @Column({ type: 'date', nullable: true })
   conclusionDate: Date | null;
+
+  @Column({ type: 'int', default: 0, comment: 'Contador para o próximo cenário de teste' })
+  testScenarioCounter: number;
+
+  @OneToMany(() => TestScenario, (testScenario) => testScenario.project)
+  testScenarios: TestScenario[];
 
   @ApiProperty({ description: 'Prefixo para IDs de casos de teste', example: 'TT' })
   @Column({ length: 10, unique: false })

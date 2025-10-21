@@ -12,9 +12,7 @@ import {
   OneToOne
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-//import { AccessGroup } from '../../access-group/entities/access-group.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsUUID } from 'class-validator';
 import { Permission } from 'src/permission/entities/permission.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
 
@@ -35,11 +33,10 @@ export class AccessGroup {
   createdDate: Date;
 
 
-  // quem criou o grupo de acesso
   @ManyToOne(() => User, (user) => user.createdAccessGroups, {
     nullable: true,
-    onDelete: 'SET NULL', // se o usuário for removido, manter a permissão
-    cascade: false,       // NÃO criar/alterar usuário automaticamente
+    onDelete: 'SET NULL',
+    cascade: false,
     eager: false,
   })
   @JoinColumn({ name: 'created_by' })

@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { AddUserToOrganizationDto } from './dto/addUserToOrganization.dto';
 import { OrganizationRole } from './entities/organization-user.entity';
+import { Organization } from './entities/organization.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 class UpdateUserRoleDto {
   role: OrganizationRole;
@@ -23,8 +25,22 @@ export class OrganizationController {
   }
 
   @Post("/addUser")
-  addUser(@Body() addUserDto: AddUserToOrganizationWithRoleDto) {
-    return this.organizationService.addUser(addUserDto.userId, addUserDto.organizationId, addUserDto.role);
+  addUser(@Body() addUserDto: AddUserToOrganizationWithRoleDto) {
+    return this.organizationService.inviteUserToOrganization(
+      addUserDto.userId, 
+      addUserDto.organizationId, 
+      addUserDto.role
+    );
+  }
+
+@Patch('/invites/:id/accept')
+  @UseGuards(AuthGuard('jwt')) 
+  acceptInvite(
+    @Param('id') membershipId: string,
+    @Req() req: any, 
+  ) {
+    const authUserId = req.user.id;
+    return this.organizationService.acceptOrganizationInvite(membershipId, authUserId);
   }
 
   @Get()
@@ -35,6 +51,11 @@ export class OrganizationController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.organizationService.findOne(id);
+  }
+
+  @Get('user/:userId')
+  async findOrganizationsByUser(@Param('userId') userId: string): Promise<Organization[]> {
+    return this.organizationService.findByUserId(userId);
   }
 
   @Get(':id/users')

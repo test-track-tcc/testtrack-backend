@@ -24,7 +24,6 @@ export class AccessGroupService {
     private usersRepo: Repository<User>,
   ) {}
 
-  // Retorna todos os grupos de acesso (de todas organizações).
   async findAll(): Promise<AccessGroup[]> {
     return this.groupsRepo.find({
       relations: ['permissions', 'organization'],
@@ -32,7 +31,6 @@ export class AccessGroupService {
     });
   }
 
- // Retorna todos os grupos de uma organização específica.
   async findAllInOrg(orgId: string): Promise<AccessGroup[]> {
     const exists = await this.orgRepo.exist({ where: { id: orgId } });
     if (!exists) {
@@ -46,7 +44,6 @@ export class AccessGroupService {
     });
   }
 
-  // Busca um grupo pelo id, carregando organization e permissions.
   async findOne(id: string): Promise<AccessGroup> {
     const group = await this.groupsRepo.findOne({
       where: { id },
@@ -60,11 +57,9 @@ export class AccessGroupService {
     return group;
   }
 
-  // Cria um novo grupo de acesso.
   async create(dto: CreateAccessGroupDto): Promise<AccessGroup> {
     const { organizationId, name, description, permissionIds } = dto;
 
-    // 1. Valida a organização
     const organization = await this.orgRepo.findOne({ where: { id: organizationId } });
     if (!organization) {
       throw new BadRequestException(`Organização com id "${organizationId}" não encontrada.`);
@@ -99,7 +94,6 @@ export class AccessGroupService {
     }
   }
 
-  // Atualiza um grupo.
   async update(id: string, updateAccessGroupDto: UpdateAccessGroupDto): Promise<AccessGroup> {
     const group = await this.groupsRepo.findOne({
       where: { id },
@@ -110,13 +104,11 @@ export class AccessGroupService {
       throw new NotFoundException(`Grupo de acesso com id "${id}" não encontrado.`);
     }
 
-    // Atualiza campos simples
     this.groupsRepo.merge(group, {
       name: updateAccessGroupDto.name,
       description: updateAccessGroupDto.description,
     });
 
-    // Se vier permissionIds, valida e substitui
     if (updateAccessGroupDto.permissionIds) {
       const permissions = await this.permRepo.find({ where: { id: In(updateAccessGroupDto.permissionIds) } });
       if (permissions.length !== updateAccessGroupDto.permissionIds.length) {
