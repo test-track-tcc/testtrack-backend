@@ -283,8 +283,72 @@ export class TestCasesService {
       );
     }
 
-    return this.findOne(id);
-  }
+    const testCaseToUpdate = currentTestCase;
+
+    if (responsibleId) {
+      const responsibleUser = await this.dataSource.getRepository(User).findOneBy({ id: responsibleId });
+      if (!responsibleUser) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+      testCaseToUpdate.responsible = responsibleUser;
+    } else if (responsibleId === null) {
+      testCaseToUpdate.responsible = null;
+    }
+
+
+    if (customTestTypeId) {
+      const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
+      if (!customTestType) {
+        throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
+      }
+      testCaseToUpdate.customTestType = customTestType;
+      testCaseToUpdate.testType = null;
+    } else if (restDto.testType) {
+      testCaseToUpdate.customTestType = null;
+    }
+
+    const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
+
+
+    const newStatus = updatedTestCase.status;
+    if (oldStatus !== newStatus && newStatus === TestCaseStatus.REPROVED) { 
+      const message = `O caso de teste "${updatedTestCase.title}" falhou.`;
+      const link = `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`;
+
+      if (currentTestCase.createdBy) {
+        await this.notificationService.create(
+          currentTestCase.createdBy,
+          message,
+          NotificationType.TEST_CASE_FAILED,
+          link,
+        );
+      }
+
+      if (currentTestCase.project && currentTestCase.project.projectUsers) {
+        for (const member of currentTestCase.project.projectUsers) {
+          if (member.user && (!currentTestCase.createdBy || String(member.user.id) !== String(currentTestCase.createdBy.id))) {
+            await this.notificationService.create(
+              member.user,
+              message,
+              NotificationType.TEST_CASE_FAILED,
+              link,
+            );
+          }
+        }
+      }
+    }
+
+    const newResponsibleId = updatedTestCase.responsible?.id;
+
+    if (newResponsibleId && newResponsibleId !== oldResponsibleId && updatedTestCase.responsible) {
+      await this.notificationService.create(
+        updatedTestCase.responsible,
+        `Você foi atribuído ao caso de teste "${updatedTestCase.title}".`,
+        NotificationType.TEST_CASE_ASSIGNMENT,
+        `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`
+      );
+    }
+
+    return this.findOne(id);
+  }
 
   async remove(id: string): Promise<void> {
     const result = await this.testCasesRepository.delete(id);
