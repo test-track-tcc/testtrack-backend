@@ -1,4 +1,8 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateBugDto } from './create-bug.dto';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { BugStatus } from '../../config/enums';
 
-export class UpdateBugDto extends PartialType(CreateBugDto) {}
+export class UpdateBugStatusDto {
+  @IsEnum(BugStatus)
+  @IsNotEmpty()
+  status: BugStatus;
+}

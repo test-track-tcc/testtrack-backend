@@ -5,6 +5,7 @@ import { Bug } from './entities/bug.entity';
 import { CreateBugDto } from './dto/create-bug.dto';
 import { UsersService } from '../users/users.service';
 import { BugStatus } from '../config/enums';
+import { UpdateBugStatusDto } from './dto/update-bug.dto';
 
 @Injectable()
 export class BugsService {
@@ -37,6 +38,13 @@ export class BugsService {
       throw new NotFoundException(`Bug with ID ${id} not found.`);
     }
     return bug;
+  }
+
+  async updateStatus(id: string, updateBugStatusDto: UpdateBugStatusDto): Promise<Bug> {
+    const bug = await this.findOne(id); // Reutiliza o findOne que já trata NotFoundException
+
+    bug.status = updateBugStatusDto.status;
+    return this.bugsRepository.save(bug);
   }
 
   async assignDeveloper(

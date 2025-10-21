@@ -11,6 +11,7 @@ import {
 import { BugsService } from './bugs.service';
 import { AssignDeveloperDto } from './dto/assign-developer.dto';
 import { Bug } from './entities/bug.entity';
+import { UpdateBugStatusDto } from './dto/update-bug.dto';
 
 @Controller('bugs')
 export class BugsController {
@@ -32,6 +33,14 @@ export class BugsController {
     @Body() assignDeveloperDto: AssignDeveloperDto,
   ): Promise<Bug> {
     return this.bugsService.assignDeveloper(id, assignDeveloperDto.developerId);
+  }
+
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateBugStatusDto: UpdateBugStatusDto,
+  ): Promise<Bug> {
+    return this.bugsService.updateStatus(id, updateBugStatusDto);
   }
 
   @Delete(':id')
