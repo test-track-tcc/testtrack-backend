@@ -15,6 +15,9 @@ import { AuthModule } from './auth/auth.module';
 import { PermissionModule } from './permission/permission.module';
 import { AccessGroupModule } from './access-group/access-group.module';
 import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
+import { ReportsModule } from './reports/reports.module';
+import { ScheduleModule } from '@nestjs/schedule'; // <-- 1. Importar o ScheduleModule
+import { PdfGeneratorModule } from './pdf-generator/pdf-generator.module';
 import { TestScenarioModule } from './test-scenario/test-scenario.module';
 import { CommentModule } from './comment/comment.module';
 import { NotificationModule } from './notification/notification.module';
@@ -61,6 +64,9 @@ import { BugsModule } from './bugs/bugs.module';
     PermissionModule,
     AccessGroupModule,
     CustomTestTypesModule,
+    ReportsModule,
+    ScheduleModule.forRoot(),
+    PdfGeneratorModule,
     TestScenarioModule,
     CommentModule,
     BugsModule,

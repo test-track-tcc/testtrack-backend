@@ -5,6 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from './entities/organization.entity';
 import { Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
+import { User } from 'src/users/entities/user.entity';
+import { AccessGroup } from 'src/access-group/entities/access-group.entity';
 import { OrganizationUser, OrganizationRole } from './entities/organization-user.entity';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationType } from 'src/notification/entities/notification.entity';
@@ -82,17 +84,38 @@ export class OrganizationService {
     });
   }
 
-  async findAllGroupAccess(orgId: string) {
-    // Ajuste para carregar os usuários através da nova relação
+  async findAccessGroupsWithPermissions(organizationId: string): Promise<AccessGroup[]> {
     const organization = await this.organizationRepository.findOne({
-      where: { id: orgId },
-      relations: ['admin', 'organizationUsers', 'organizationUsers.user', 'accessGroups', 'accessGroups.permissions'],
+      where: { id: organizationId },
+      relations: {
+        accessGroups: {
+          permissions: true,
+        },
+      },
     });
-     if (!organization) {
-        throw new NotFoundException(`Organização com ID "${orgId}" não encontrada.`);
+
+    if (!organization) {
+      throw new NotFoundException(`Organização com ID "${organizationId}" não encontrada.`);
     }
-    return organization;
+    
+    return organization.accessGroups;
   }
+
+
+  //async findAllGroupAccess(orgId: string) {
+  //  // Ajuste para carregar os usuários através da nova relação
+  //  const organization = await this.organizationRepository.findOne({
+  //    where: { id: orgId },
+  //    relations: ['accessGroups', 'accessGroups.permissions'],
+  //  });
+  //  if (!organization) {
+  //    throw new NotFoundException(`Organização com ID "${orgId}" não encontrada.`);
+  //  }
+  //  return organization;
+  //}
+
+
+
 
   async findOne(id: string) {
     const organizationFound = await this.organizationRepository.findOne({

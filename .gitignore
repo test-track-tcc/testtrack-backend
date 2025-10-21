@@ -21,6 +21,7 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+run-backend.bat
 
 # Tests
 /coverage
