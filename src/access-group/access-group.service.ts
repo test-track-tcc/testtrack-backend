@@ -39,7 +39,7 @@ export class AccessGroupService {
 
     return this.groupsRepo.find({
       where: { organization: { id: orgId } },
-      relations: ['permissions', 'organization'],
+      relations: ['permissions', 'organization', 'users'],
       order: { name: 'ASC' },
     });
   }
