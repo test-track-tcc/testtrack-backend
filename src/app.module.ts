@@ -16,12 +16,13 @@ import { PermissionModule } from './permission/permission.module';
 import { AccessGroupModule } from './access-group/access-group.module';
 import { CustomTestTypesModule } from './custom-test-types/custom-test-type.module';
 import { ReportsModule } from './reports/reports.module';
-import { ScheduleModule } from '@nestjs/schedule'; // <-- 1. Importar o ScheduleModule
+import { ScheduleModule } from '@nestjs/schedule';
 import { PdfGeneratorModule } from './pdf-generator/pdf-generator.module';
 import { TestScenarioModule } from './test-scenario/test-scenario.module';
 import { CommentModule } from './comment/comment.module';
 import { NotificationModule } from './notification/notification.module';
 import { BugsModule } from './bugs/bugs.module';
+import { ChartsModule } from './charts/charts.module';
 
 @Module({
   imports: [
@@ -71,7 +72,8 @@ import { BugsModule } from './bugs/bugs.module';
     CommentModule,
     BugsModule,
     NotificationModule,
-    BugsModule
+    BugsModule,
+    ChartsModule
   ],
   controllers: [AppController],
   providers: [AppService],
