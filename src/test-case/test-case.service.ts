@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
@@ -49,18 +49,24 @@ export class TestCasesService {
       } = createTestCaseDto;
 
       const project = await transactionalEntityManager.findOne(Project, { where: { id: projectId } });
-      if (!project) throw new NotFoundException(`Project with ID "${projectId}" not found.`);
+      if (!project) {
+        throw new NotFoundException(`Project with ID "${projectId}" not found.`);
+      }
 
       project.testCaseSequence = (project.testCaseSequence || 0) + 1;
       await transactionalEntityManager.save(project);
 
       const createdBy = await transactionalEntityManager.findOneBy(User, { id: createdById });
-      if (!createdBy) throw new NotFoundException(`Creator user with ID "${createdById}" not found.`);
+      if (!createdBy) {
+        throw new NotFoundException(`Creator user with ID "${createdById}" not found.`);
+      }
 
       let responsible: User | null = null;
       if (responsibleId) {
         responsible = await transactionalEntityManager.findOneBy(User, { id: responsibleId });
-        if (!responsible) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+        if (!responsible) {
+          throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+        }
       }
 
       const newTestCase = transactionalEntityManager.create(TestCase, {
@@ -84,7 +90,7 @@ export class TestCasesService {
 
       const savedTestCase = await transactionalEntityManager.save(newTestCase);
 
-      const validScriptPaths = scriptPaths?.filter(path => typeof path === 'string' && path.length > 0);
+      const validScriptPaths = scriptPaths?.filter((path) => typeof path === 'string' && path.length > 0);
       if (validScriptPaths && validScriptPaths.length > 0) {
         for (const scriptPath of validScriptPaths) {
           const newScript = transactionalEntityManager.create(Script, {
@@ -97,12 +103,14 @@ export class TestCasesService {
       }
       return savedTestCase;
     });
+
+
     if (newTestCase.responsible) {
       await this.notificationService.create(
         newTestCase.responsible,
         `Você foi atribuído ao caso de teste "${newTestCase.title}".`,
         NotificationType.TEST_CASE_ASSIGNMENT,
-        `/projects/${newTestCase.project.id}/test-cases/${newTestCase.id}`
+        `/projects/${newTestCase.project.id}/test-cases/${newTestCase.id}`,
       );
     }
 
@@ -134,21 +142,22 @@ export class TestCasesService {
     }
 
     if (newTestCase.status === TestCaseStatus.REPROVED && newTestCase.bugResponsibleId) {
-      try {
-        await this.bugsService.create({
-          title: `Caso de Teste com Falha: ${newTestCase.project.prefix}-${newTestCase.projectSequenceId} ${newTestCase.title}`,
-          description: `Test case "${newTestCase.title}" failed execution.\n\nDescription: ${newTestCase.description}\n\nSteps: ${newTestCase.steps}\n\nExpected Result: ${newTestCase.expectedResult}`,
-          priority: newTestCase.priority,
-          testCaseId: newTestCase.id,
-          assignedDeveloperId: newTestCase.bugResponsibleId, 
-        });
-      } catch (error) {
-        console.error(
-          `Failed to automatically create bug for test case ${newTestCase.id} during creation:`,
-          error,
-        );
-      }
-    }
+      try {
+        await this.bugsService.create({
+          title: `Caso de Teste com Falha: ${newTestCase.project.prefix}-${newTestCase.projectSequenceId} ${newTestCase.title}`,
+          description: `Test case "${newTestCase.title}" failed execution.\n\nDescription: ${newTestCase.description}\n\nSteps: ${newTestCase.steps}\n\nExpected Result: ${newTestCase.expectedResult}`,
+          priority: newTestCase.priority,
+          testCaseId: newTestCase.id,
+          assignedDeveloperId: newTestCase.bugResponsibleId,
+        });
+      } catch (error) {
+        console.error(
+          `Failed to automatically create bug for test case ${newTestCase.id} during creation:`,
+          error,
+        );
+      }
+    }
+
     return this.findOne(newTestCase.id);
   }
 
