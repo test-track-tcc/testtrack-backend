@@ -25,7 +25,7 @@ export class BugsService {
 
   findAll(): Promise<Bug[]> {
     return this.bugsRepository.find({
-      relations: ['testCase', 'assignedDeveloper'],
+      relations: ['testCase', 'assignedDeveloper', 'testCase.project'],
     });
   }
 
