@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, UnauthorizedException } from '@nestjs/common';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,16 +6,21 @@ import { Organization } from './entities/organization.entity';
 import { Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { User } from 'src/users/entities/user.entity';
-import { OrganizationUser, OrganizationRole } from './entities/organization-user.entity'; // Importe a entidade e o enum
+import { AccessGroup } from 'src/access-group/entities/access-group.entity';
+import { OrganizationUser, OrganizationRole } from './entities/organization-user.entity';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/notification/entities/notification.entity';
+import { MembershipStatus } from './entities/organization-user.entity';
 
 @Injectable()
 export class OrganizationService {
   constructor(
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
-    @InjectRepository(OrganizationUser) // Injete o novo repositório
+    @InjectRepository(OrganizationUser)
     private organizationUserRepository: Repository<OrganizationUser>,
     private usersService: UsersService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
@@ -79,17 +84,38 @@ export class OrganizationService {
     });
   }
 
-  async findAllGroupAccess(orgId: string) {
-    // Ajuste para carregar os usuários através da nova relação
+  async findAccessGroupsWithPermissions(organizationId: string): Promise<AccessGroup[]> {
     const organization = await this.organizationRepository.findOne({
-      where: { id: orgId },
-      relations: ['admin', 'organizationUsers', 'organizationUsers.user', 'accessGroups', 'accessGroups.permissions'],
+      where: { id: organizationId },
+      relations: {
+        accessGroups: {
+          permissions: true,
+        },
+      },
     });
-     if (!organization) {
-        throw new NotFoundException(`Organização com ID "${orgId}" não encontrada.`);
+
+    if (!organization) {
+      throw new NotFoundException(`Organização com ID "${organizationId}" não encontrada.`);
     }
-    return organization;
+    
+    return organization.accessGroups;
   }
+
+
+  //async findAllGroupAccess(orgId: string) {
+  //  // Ajuste para carregar os usuários através da nova relação
+  //  const organization = await this.organizationRepository.findOne({
+  //    where: { id: orgId },
+  //    relations: ['accessGroups', 'accessGroups.permissions'],
+  //  });
+  //  if (!organization) {
+  //    throw new NotFoundException(`Organização com ID "${orgId}" não encontrada.`);
+  //  }
+  //  return organization;
+  //}
+
+
+
 
   async findOne(id: string) {
     const organizationFound = await this.organizationRepository.findOne({
@@ -221,5 +247,79 @@ export class OrganizationService {
 
     organizationUser.role = role;
     return this.organizationUserRepository.save(organizationUser);
+  }
+
+  async inviteUserToOrganization(
+    userId: string, 
+    organizationId: string, 
+    role: OrganizationRole = OrganizationRole.MEMBER
+  ): Promise<OrganizationUser> {
+    
+    const organization = await this.organizationRepository.findOne({ where: { id: organizationId } });
+    if (!organization) {
+        throw new NotFoundException(`Organização com ID "${organizationId}" não encontrada.`);
+    }
+
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`Usuário com ID "${userId}" não encontrado.`);
+    }
+
+    const existingMembership = await this.organizationUserRepository.findOne({
+        where: { user: { id: userId }, organization: { id: organizationId } }
+    });
+
+    if (existingMembership) {
+        if (existingMembership.status === MembershipStatus.ACCEPTED) {
+            throw new BadRequestException('Este usuário já é membro da organização.');
+        }
+        if (existingMembership.status === MembershipStatus.PENDING) {
+            throw new BadRequestException('Este usuário já foi convidado.');
+        }
+    }
+
+    const newMembership = this.organizationUserRepository.create({
+        organization,
+        user,
+        role,
+        status: MembershipStatus.PENDING,
+    });
+
+    const savedMembership = await this.organizationUserRepository.save(newMembership);
+
+    await this.notificationService.create(
+      user,
+      `Você foi convidado para a organização "${organization.name}".`,
+      NotificationType.ORGANIZATION_INVITE,
+      savedMembership.id
+    );
+
+    return savedMembership;
+  }
+
+  async acceptOrganizationInvite(
+    membershipId: string, 
+    authUserId: string
+  ): Promise<OrganizationUser> {
+
+    const membership = await this.organizationUserRepository.findOne({
+      where: { id: membershipId },
+      relations: ['user', 'organization'],
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Convite não encontrado.');
+    }
+
+    if (membership.user.id !== authUserId) {
+      throw new UnauthorizedException('Você não tem permissão para aceitar este convite.');
+    }
+
+    if (membership.status !== MembershipStatus.PENDING) {
+      throw new BadRequestException('Este convite já foi respondido.');
+    }
+
+    membership.status = MembershipStatus.ACCEPTED;
+    return this.organizationUserRepository.save(membership);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
@@ -8,6 +8,10 @@ import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Script } from './entities/script.entity';
 import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/notification/entities/notification.entity';
+import { TestCaseStatus } from 'src/config/enums';
+import { BugsService } from 'src/bugs/bugs.service';
 
 @Injectable()
 export class TestCasesService {
@@ -17,61 +21,76 @@ export class TestCasesService {
     private testCasesRepository: Repository<TestCase>,
     @InjectRepository(CustomTestType)
     private customTestTypeRepository: Repository<CustomTestType>,
-  ) {}
+    private readonly notificationService: NotificationService,
+    private readonly bugsService: BugsService
+  ) { }
+
+  private readonly relationsToLoad = [
+    'project',
+    'createdBy',
+    'responsible',
+    'customTestType',
+    'bugResponsible',
+    'scripts',
+    'testScenario',
+  ];
 
   async create(createTestCaseDto: CreateTestCaseDto): Promise<TestCase> {
-    return this.dataSource.transaction(async (transactionalEntityManager) => {
+    const newTestCase = await this.dataSource.transaction(async (transactionalEntityManager) => {
       const {
         projectId,
         createdById,
         responsibleId,
         customTestTypeId,
+        testScenarioId,
+        bugResponsibleId,
         scripts: scriptPaths,
         ...testCaseData
       } = createTestCaseDto;
 
       const project = await transactionalEntityManager.findOne(Project, { where: { id: projectId } });
-      if (!project) throw new NotFoundException(`Project with ID "${projectId}" not found.`);
+      if (!project) {
+        throw new NotFoundException(`Project with ID "${projectId}" not found.`);
+      }
 
-      // Incrementa a sequência do projeto
       project.testCaseSequence = (project.testCaseSequence || 0) + 1;
-      const newSequenceId = project.testCaseSequence;
       await transactionalEntityManager.save(project);
 
       const createdBy = await transactionalEntityManager.findOneBy(User, { id: createdById });
-      if (!createdBy) throw new NotFoundException(`Creator user with ID "${createdById}" not found.`);
+      if (!createdBy) {
+        throw new NotFoundException(`Creator user with ID "${createdById}" not found.`);
+      }
 
       let responsible: User | null = null;
       if (responsibleId) {
         responsible = await transactionalEntityManager.findOneBy(User, { id: responsibleId });
-        if (!responsible) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+        if (!responsible) {
+          throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+        }
       }
 
-      // 1. Cria a instância da entidade TestCase com os dados básicos
       const newTestCase = transactionalEntityManager.create(TestCase, {
         ...testCaseData,
         project,
         createdBy,
         responsible,
-        projectSequenceId: newSequenceId,
+        testScenarioId: testScenarioId || null,
+        projectSequenceId: project.testCaseSequence,
+        bugResponsibleId: bugResponsibleId || null,
       });
 
-      // 2. Se um tipo customizado for fornecido, busca e o anexa à instância
       if (customTestTypeId) {
         const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
         if (!customTestType) {
           throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
         }
-        // Atribui a relação e anula o tipo padrão
         newTestCase.customTestType = customTestType;
-        newTestCase.testType = null; 
+        newTestCase.testType = null;
       }
 
-      // 3. Salva a entidade agora completa
       const savedTestCase = await transactionalEntityManager.save(newTestCase);
-      
-      const validScriptPaths = scriptPaths?.filter(path => typeof path === 'string' && path.length > 0);
-      
+
+      const validScriptPaths = scriptPaths?.filter((path) => typeof path === 'string' && path.length > 0);
       if (validScriptPaths && validScriptPaths.length > 0) {
         for (const scriptPath of validScriptPaths) {
           const newScript = transactionalEntityManager.create(Script, {
@@ -82,51 +101,199 @@ export class TestCasesService {
           await transactionalEntityManager.save(newScript);
         }
       }
-
-      const result = await transactionalEntityManager.findOne(TestCase, {
-          where: { id: savedTestCase.id },
-      });
-
-      if (!result) {
-        throw new NotFoundException('Failed to retrieve the test case after creation.');
-      }
-      
-      return result;
+      return savedTestCase;
     });
+
+
+    if (newTestCase.responsible) {
+      await this.notificationService.create(
+        newTestCase.responsible,
+        `Você foi atribuído ao caso de teste "${newTestCase.title}".`,
+        NotificationType.TEST_CASE_ASSIGNMENT,
+        `/projects/${newTestCase.project.id}/test-cases/${newTestCase.id}`,
+      );
+    }
+
+    if (newTestCase.status === TestCaseStatus.REPROVED) {
+      const message = `O caso de teste "${newTestCase.title}" falhou.`;
+      const link = `/projects/${newTestCase.project.id}/test-cases/${newTestCase.id}`;
+
+      if (newTestCase.createdBy) {
+        await this.notificationService.create(
+          newTestCase.createdBy,
+          message,
+          NotificationType.TEST_CASE_FAILED,
+          link,
+        );
+      }
+
+      if (newTestCase.project && newTestCase.project.projectUsers) {
+        for (const member of newTestCase.project.projectUsers) {
+          if (member.user && (!newTestCase.createdBy || String(member.user.id) !== String(newTestCase.createdBy.id))) {
+            await this.notificationService.create(
+              member.user,
+              message,
+              NotificationType.TEST_CASE_FAILED,
+              link,
+            );
+          }
+        }
+      }
+    }
+
+    if (newTestCase.status === TestCaseStatus.REPROVED && newTestCase.bugResponsibleId) {
+      try {
+        await this.bugsService.create({
+          title: `Caso de Teste com Falha: ${newTestCase.project.prefix}-${newTestCase.projectSequenceId} ${newTestCase.title}`,
+          description: `Test case "${newTestCase.title}" failed execution.\n\nDescription: ${newTestCase.description}\n\nSteps: ${newTestCase.steps}\n\nExpected Result: ${newTestCase.expectedResult}`,
+          priority: newTestCase.priority,
+          testCaseId: newTestCase.id,
+          assignedDeveloperId: newTestCase.bugResponsibleId,
+        });
+      } catch (error) {
+        console.error(
+          `Failed to automatically create bug for test case ${newTestCase.id} during creation:`,
+          error,
+        );
+      }
+    }
+
+    return this.findOne(newTestCase.id);
   }
 
   findAllByProject(projectId: string): Promise<TestCase[]> {
     return this.testCasesRepository.find({
       where: { project: { id: projectId } },
-      relations: ['project', 'createdBy', 'responsible'],
+      relations: this.relationsToLoad,
     });
   }
 
-  findOne(id: string): Promise<TestCase | null> {
-    return this.testCasesRepository.findOne({ where: { id }, relations: ['scripts', 'createdBy', 'responsible', 'project'] });
+  async findOne(id: string): Promise<TestCase> {
+    const testCase = await this.testCasesRepository.findOne({
+      where: { id },
+      relations: this.relationsToLoad,
+    });
+
+    if (!testCase) {
+      throw new NotFoundException(`Caso de teste com ID ${id} não encontrado`);
+    }
+
+    return testCase;
   }
 
   async update(id: string, updateTestCaseDto: UpdateTestCaseDto): Promise<TestCase> {
-    const { scripts, customTestTypeId, ...restDto } = updateTestCaseDto;
+    const currentTestCase = await this.testCasesRepository.findOne({
+      where: { id },
+      relations: [
+        'createdBy',
+        'responsible',
+        'project',
+        'project.projectUsers',
+        'project.projectUsers.user',
+      ],
+    });
 
-    const testCase = await this.testCasesRepository.findOneBy({ id });
-    if (!testCase) {
-        throw new NotFoundException(`Test case with ID "${id}" not found.`);
+    if (!currentTestCase) {
+      throw new NotFoundException(`Test case with ID "${id}" not found.`);
     }
-    Object.assign(testCase, restDto);
+
+    const oldStatus = currentTestCase.status;
+    const oldResponsibleId = currentTestCase.responsible?.id;
+
+    const {
+      scripts,
+      customTestTypeId,
+      testScenarioId,
+      responsibleId,
+      bugResponsibleId,
+      ...restDto
+    } = updateTestCaseDto;
+
+    Object.assign(currentTestCase, restDto);
+    currentTestCase.testScenarioId = testScenarioId ?? currentTestCase.testScenarioId;
+    currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
+
+    const testCaseToUpdate = currentTestCase;
+
+    if (responsibleId) {
+      const responsibleUser = await this.dataSource.getRepository(User).findOneBy({ id: responsibleId });
+      if (!responsibleUser) throw new NotFoundException(`Responsible user with ID "${responsibleId}" not found.`);
+      testCaseToUpdate.responsible = responsibleUser;
+    } else if (responsibleId === null) {
+      testCaseToUpdate.responsible = null;
+    }
 
     if (customTestTypeId) {
-        const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
-        if (!customTestType) {
-            throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
-        }
-        testCase.customTestType = customTestType;
-        testCase.testType = null;
+      const customTestType = await this.customTestTypeRepository.findOneBy({ id: customTestTypeId });
+      if (!customTestType) {
+        throw new NotFoundException(`Tipo de teste personalizado com ID "${customTestTypeId}" não encontrado.`);
+      }
+      testCaseToUpdate.customTestType = customTestType;
+      testCaseToUpdate.testType = null;
     } else if (restDto.testType) {
-        testCase.customTestType = null;
+      testCaseToUpdate.customTestType = null;
+    }
+
+    const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
+
+    const newStatus = updatedTestCase.status;
+    if (oldStatus !== newStatus && newStatus === TestCaseStatus.REPROVED) {
+      const message = `O caso de teste "${updatedTestCase.title}" falhou.`;
+      const link = `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`;
+
+      if (currentTestCase.createdBy) {
+        await this.notificationService.create(
+          currentTestCase.createdBy,
+          message,
+          NotificationType.TEST_CASE_FAILED,
+          link,
+        );
+      }
+
+      if (currentTestCase.project && currentTestCase.project.projectUsers) {
+        for (const member of currentTestCase.project.projectUsers) {
+          if (member.user && (!currentTestCase.createdBy || String(member.user.id) !== String(currentTestCase.createdBy.id))) {
+            await this.notificationService.create(
+              member.user,
+              message,
+              NotificationType.TEST_CASE_FAILED,
+              link,
+            );
+          }
+        }
+      }
+
+      if (updatedTestCase.bugResponsibleId) {
+        try {
+          await this.bugsService.create({
+            title: `Caso de Teste com Falha: ${updatedTestCase.project.prefix}-${updatedTestCase.projectSequenceId}${updatedTestCase.title}`,
+            description: `Test case "${updatedTestCase.title}" failed execution.\n\nDescription: ${updatedTestCase.description}\n\nSteps: ${updatedTestCase.steps}\n\nExpected Result: ${updatedTestCase.expectedResult}`,
+            priority: updatedTestCase.priority,
+            testCaseId: updatedTestCase.id,
+            assignedDeveloperId: updatedTestCase.bugResponsibleId,
+          });
+        } catch (error) {
+          console.error(
+            `Failed to automatically create bug for test case ${updatedTestCase.id} during update:`,
+            error,
+          );
+        }
+      }
+    }
+
+    const newResponsibleId = updatedTestCase.responsible?.id;
+
+    if (newResponsibleId && newResponsibleId !== oldResponsibleId && updatedTestCase.responsible) {
+      await this.notificationService.create(
+        updatedTestCase.responsible,
+        `Você foi atribuído ao caso de teste "${updatedTestCase.title}".`,
+        NotificationType.TEST_CASE_ASSIGNMENT,
+        `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`
+      );
     }
     
-    return this.testCasesRepository.save(testCase);
+
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
@@ -135,39 +302,23 @@ export class TestCasesService {
       throw new NotFoundException(`Test case with ID "${id}" not found for deletion.`);
     }
   }
-  
+
   async addScript(id: string, scriptPath: string): Promise<TestCase> {
-    return this.dataSource.transaction(async (transactionalEntityManager) => {
+    await this.dataSource.transaction(async (transactionalEntityManager) => {
       const testCase = await transactionalEntityManager.findOne(TestCase, {
         where: { id },
         relations: ['scripts'],
       });
-      if (!testCase) {
-        throw new NotFoundException('Test case not found.');
-      }
+      if (!testCase) throw new NotFoundException('Test case not found.');
 
-      const latestVersion = testCase.scripts.reduce(
-        (max, script) => Math.max(max, script.version),
-        0,
-      );
-
+      const latestVersion = testCase.scripts.reduce((max, script) => Math.max(max, script.version), 0);
       const newScript = transactionalEntityManager.create(Script, {
         scriptPath,
         version: latestVersion + 1,
         testCase: testCase,
       });
-
       await transactionalEntityManager.save(newScript);
-
-      const updatedTestCase = await transactionalEntityManager.findOne(TestCase, {
-        where: { id },
-        relations: ['scripts'],
-      });
-       if (!updatedTestCase) {
-        throw new NotFoundException('Test case not found after saving the script.');
-      }
-
-      return updatedTestCase;
     });
+    return this.findOne(id);
   }
 }

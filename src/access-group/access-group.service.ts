@@ -6,6 +6,7 @@ import { Organization } from '../organization/entities/organization.entity';
 import { Permission } from '../permission/entities/permission.entity';
 import { CreateAccessGroupDto } from './dto/create-access-group.dto';
 import { UpdateAccessGroupDto } from './dto/update-access-group.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AccessGroupService {
@@ -18,9 +19,11 @@ export class AccessGroupService {
 
     @InjectRepository(Permission)
     private permRepo: Repository<Permission>,
+
+    @InjectRepository(User)
+    private usersRepo: Repository<User>,
   ) {}
 
-  // Retorna todos os grupos de acesso (de todas organizações).
   async findAll(): Promise<AccessGroup[]> {
     return this.groupsRepo.find({
       relations: ['permissions', 'organization'],
@@ -28,7 +31,6 @@ export class AccessGroupService {
     });
   }
 
- // Retorna todos os grupos de uma organização específica.
   async findAllInOrg(orgId: string): Promise<AccessGroup[]> {
     const exists = await this.orgRepo.exist({ where: { id: orgId } });
     if (!exists) {
@@ -37,16 +39,15 @@ export class AccessGroupService {
 
     return this.groupsRepo.find({
       where: { organization: { id: orgId } },
-      relations: ['permissions', 'organization'],
+      relations: ['permissions', 'organization', 'users'],
       order: { name: 'ASC' },
     });
   }
 
-  // Busca um grupo pelo id, carregando organization e permissions.
   async findOne(id: string): Promise<AccessGroup> {
     const group = await this.groupsRepo.findOne({
       where: { id },
-      relations: ['permissions', 'organization'],
+      relations: ['permissions', 'organization', 'users'],
     });
 
     if (!group) {
@@ -56,11 +57,9 @@ export class AccessGroupService {
     return group;
   }
 
-  // Cria um novo grupo de acesso.
   async create(dto: CreateAccessGroupDto): Promise<AccessGroup> {
     const { organizationId, name, description, permissionIds } = dto;
 
-    // 1. Valida a organização
     const organization = await this.orgRepo.findOne({ where: { id: organizationId } });
     if (!organization) {
       throw new BadRequestException(`Organização com id "${organizationId}" não encontrada.`);
@@ -95,7 +94,6 @@ export class AccessGroupService {
     }
   }
 
-  // Atualiza um grupo.
   async update(id: string, updateAccessGroupDto: UpdateAccessGroupDto): Promise<AccessGroup> {
     const group = await this.groupsRepo.findOne({
       where: { id },
@@ -106,13 +104,11 @@ export class AccessGroupService {
       throw new NotFoundException(`Grupo de acesso com id "${id}" não encontrado.`);
     }
 
-    // Atualiza campos simples
     this.groupsRepo.merge(group, {
       name: updateAccessGroupDto.name,
       description: updateAccessGroupDto.description,
     });
 
-    // Se vier permissionIds, valida e substitui
     if (updateAccessGroupDto.permissionIds) {
       const permissions = await this.permRepo.find({ where: { id: In(updateAccessGroupDto.permissionIds) } });
       if (permissions.length !== updateAccessGroupDto.permissionIds.length) {
@@ -142,5 +138,53 @@ export class AccessGroupService {
     } catch (error) {
       throw new BadRequestException('Erro ao deletar o grupo de acesso.');
     }
+  }
+
+  async addUser(groupId: string, userId: string): Promise<AccessGroup> {
+    // Busca o grupo de acesso e carrega a relação 'users'
+    const accessGroup = await this.groupsRepo.findOne({
+      where: { id: groupId },
+      relations: ['users'],
+    });
+
+    if (!accessGroup) {
+      throw new NotFoundException(`Grupo de acesso com id "${groupId}" não encontrado.`);
+    }
+
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException(`Usuário com id "${userId}" não encontrado.`);
+    }
+    
+    // Verifica se o usuário já está no grupo para evitar duplicatas
+    const userAlreadyInGroup = accessGroup.users.some(u => u.id === user.id);
+    if (userAlreadyInGroup) {
+      // Retorna o grupo como está
+      return accessGroup;
+    }
+
+    accessGroup.users.push(user);
+    return this.groupsRepo.save(accessGroup);
+  }
+
+  async removeUser(groupId: string, userId: string): Promise<AccessGroup> {
+    const group = await this.groupsRepo.findOne({
+      where: { id: groupId },
+      relations: ['users'],
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Grupo de acesso com id "${groupId}" não encontrado.`);
+    }
+
+    const userIndex = group.users.findIndex(user => user.id === userId);
+    if (userIndex === -1) {
+      throw new NotFoundException(`O usuário com ID "${userId}" não foi encontrado no grupo "${group.name}".`);
+    }
+
+    group.users = group.users.filter(user => user.id !== userId); // encontra o usuário e remove do array
+
+    return await this.groupsRepo.save(group);
   }
 }

@@ -8,6 +8,12 @@ export enum OrganizationRole {
   DEVELOPER = 'DEVELOPER',
 }
 
+export enum MembershipStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+}
+
 @Entity('organization_users')
 export class OrganizationUser {
   @PrimaryGeneratedColumn('uuid')
@@ -27,4 +33,11 @@ export class OrganizationUser {
     default: OrganizationRole.MEMBER,
   })
   role: OrganizationRole;
+
+  @Column({
+    type: 'enum',
+    enum: MembershipStatus,
+    default: MembershipStatus.PENDING,
+  })
+  status: MembershipStatus;
 }
