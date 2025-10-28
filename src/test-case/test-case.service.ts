@@ -215,30 +215,29 @@ export class TestCasesService {
     currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
 
     if (scripts && scripts.length > 0) {
-      const oldScripts = currentTestCase.scripts || [];
-      const scriptRepository = this.dataSource.getRepository(Script);
-      const newScriptEntities: Script[] = [];
+      const oldScripts = currentTestCase.scripts || [];
+      const scriptRepository = this.dataSource.getRepository(Script);
+      const newScriptEntities: Script[] = [];
 
-      for (const scriptName of scripts) {
+      let latestVersion = oldScripts.reduce((max, script) => Math.max(max, script.version), 0);
 
-        const latestVersionForThisScript = oldScripts
-          .filter(s => s.scriptPath === scriptName)
-          .reduce((max, script) => Math.max(max, script.version), 0); 
+      for (const scriptName of scripts) {
+        latestVersion++; 
 
-        const newScript = new Script();
-        newScript.scriptPath = scriptName;
-        newScript.testCase = currentTestCase;
-        newScript.version = latestVersionForThisScript + 1;
+        const newScript = new Script();
+        newScript.scriptPath = scriptName;
+        newScript.testCase = currentTestCase;
+        newScript.version = latestVersion;
 
-        newScriptEntities.push(newScript);
-      }
+        newScriptEntities.push(newScript);
+      }
 
-      if (newScriptEntities.length > 0) {
-        await scriptRepository.save(newScriptEntities);
-      }
+      if (newScriptEntities.length > 0) {
+        await scriptRepository.save(newScriptEntities);
+      }
 
-      currentTestCase.scripts = [...oldScripts, ...newScriptEntities];
-    }
+      currentTestCase.scripts = [...oldScripts, ...newScriptEntities];
+    }
 
     const testCaseToUpdate = currentTestCase;
 
