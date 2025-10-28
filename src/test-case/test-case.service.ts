@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
@@ -190,6 +190,7 @@ export class TestCasesService {
         'project',
         'project.projectUsers',
         'project.projectUsers.user',
+        'scripts',
       ],
     });
 
@@ -213,6 +214,32 @@ export class TestCasesService {
     currentTestCase.testScenarioId = testScenarioId ?? currentTestCase.testScenarioId;
     currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
 
+    if (scripts && scripts.length > 0) {
+      const oldScripts = currentTestCase.scripts || [];
+      const scriptRepository = this.dataSource.getRepository(Script);
+      const newScriptEntities: Script[] = [];
+
+      for (const scriptName of scripts) {
+
+        const latestVersionForThisScript = oldScripts
+          .filter(s => s.scriptPath === scriptName)
+          .reduce((max, script) => Math.max(max, script.version), 0); 
+
+        const newScript = new Script();
+        newScript.scriptPath = scriptName;
+        newScript.testCase = currentTestCase;
+        newScript.version = latestVersionForThisScript + 1;
+
+        newScriptEntities.push(newScript);
+      }
+
+      if (newScriptEntities.length > 0) {
+        await scriptRepository.save(newScriptEntities);
+      }
+
+      currentTestCase.scripts = [...oldScripts, ...newScriptEntities];
+    }
+
     const testCaseToUpdate = currentTestCase;
 
     if (responsibleId) {
@@ -233,6 +260,8 @@ export class TestCasesService {
     } else if (restDto.testType) {
       testCaseToUpdate.customTestType = null;
     }
+
+    testCaseToUpdate.version = (currentTestCase.version || 1) + 1;
 
     const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
 
@@ -264,21 +293,21 @@ export class TestCasesService {
       }
 
       if (updatedTestCase.bugResponsibleId) {
-        try {
-          await this.bugsService.create({
-            title: `Caso de Teste com Falha: ${updatedTestCase.project.prefix}-${updatedTestCase.projectSequenceId}${updatedTestCase.title}`,
-            description: `Test case "${updatedTestCase.title}" failed execution.\n\nDescription: ${updatedTestCase.description}\n\nSteps: ${updatedTestCase.steps}\n\nExpected Result: ${updatedTestCase.expectedResult}`,
-            priority: updatedTestCase.priority,
-            testCaseId: updatedTestCase.id,
-            assignedDeveloperId: updatedTestCase.bugResponsibleId,
-          });
-        } catch (error) {
-          console.error(
-            `Failed to automatically create bug for test case ${updatedTestCase.id} during update:`,
-            error,
-          );
-        }
-      }
+        try {
+          await this.bugsService.create({
+            title: `Caso de Teste com Falha: ${updatedTestCase.project.prefix}-${updatedTestCase.projectSequenceId}${updatedTestCase.title}`,
+            description: `Test case "${updatedTestCase.title}" failed execution.\n\nDescription: ${updatedTestCase.description}\n\nSteps: ${updatedTestCase.steps}\n\nExpected Result: ${updatedTestCase.expectedResult}`,
+            priority: updatedTestCase.priority,
+            testCaseId: updatedTestCase.id,
+            assignedDeveloperId: updatedTestCase.bugResponsibleId,
+          });
+        } catch (error) {
+          console.error(
+            `Failed to automatically create bug for test case ${updatedTestCase.id} during update:`,
+            error,
+          );
+        }
+      }
     }
 
     const newResponsibleId = updatedTestCase.responsible?.id;
@@ -291,8 +320,6 @@ export class TestCasesService {
         `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`
       );
     }
-    
-
     return this.findOne(id);
   }
 
