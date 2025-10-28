@@ -53,4 +53,9 @@ export class ReportsController {
       await this.reportsService.generatePersonalizedIntervalReport(projectId, startDate, endDate);
       return { message: 'Geração de relatório personalizado iniciada.' };
   }
+
+  @Get('project/:projectId')
+  async getByProjectId(@Param('projectId', ParseUUIDPipe) projectId: string) {
+    return this.reportsService.findByProjectId(projectId);
+  }
 }
