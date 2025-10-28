@@ -212,17 +212,21 @@ export class ReportsService {
     return report;
   }
 
-  // /**
-  //  * Busca relatórios por projeto e intervalo de datas.
-  //  */
-  // async findByProjectAndDateRange(projectId: string, startDate: Date, endDate: Date): Promise<Report[]> {
-  //   return this.reportRepository.find({
-  //     where: {
-  //       project: { id: projectId },
-  //       generatedAt: Between(startDate, endDate),
-  //     },
-  //     order: { generatedAt: 'DESC' },
-  //   });
-  // } 
-  // AINDA NÃO IMPLEMENTADO, POIS RELATÓRIO NÃO TEM RELAÇÃO COM PROJETO
+  async findByProjectId(projectId: string): Promise<Report[]> {
+    const reports = await this.reportRepository.find({
+      where: {
+        project: { id: projectId }, // Filtra pela ID da relação 'project'
+      },
+      relations: ['project'], // Garante que os dados do projeto venham juntos
+      order: {
+        generatedAt: 'DESC', // Ordena pelos mais recentes, igual ao frontend
+      },
+    });
+
+    if (!reports) {
+      new NotFoundException(`Nenhum relatório encontrado para o projeto com ID ${projectId}`);
+    }
+
+    return reports;
+  }
 }

@@ -23,6 +23,7 @@ import { CommentModule } from './comment/comment.module';
 import { NotificationModule } from './notification/notification.module';
 import { BugsModule } from './bugs/bugs.module';
 import { ChartsModule } from './charts/charts.module';
+import { ScriptsModule } from './scripts/scripts.module';
 
 @Module({
   imports: [
@@ -73,7 +74,8 @@ import { ChartsModule } from './charts/charts.module';
     BugsModule,
     NotificationModule,
     BugsModule,
-    ChartsModule
+    ChartsModule,
+    ScriptsModule
   ],
   controllers: [AppController],
   providers: [AppService],

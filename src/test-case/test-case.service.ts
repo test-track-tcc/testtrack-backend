@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
@@ -92,18 +92,20 @@ export class TestCasesService {
 
       const validScriptPaths = scriptPaths?.filter((path) => typeof path === 'string' && path.length > 0);
       if (validScriptPaths && validScriptPaths.length > 0) {
+        let currentVersion = 1;
         for (const scriptPath of validScriptPaths) {
           const newScript = transactionalEntityManager.create(Script, {
             scriptPath,
-            version: 1,
+            version: currentVersion++,
             testCase: savedTestCase,
+            status: savedTestCase.status,
+            statusSetAt: new Date()
           });
           await transactionalEntityManager.save(newScript);
         }
       }
       return savedTestCase;
     });
-
 
     if (newTestCase.responsible) {
       await this.notificationService.create(
@@ -190,6 +192,7 @@ export class TestCasesService {
         'project',
         'project.projectUsers',
         'project.projectUsers.user',
+        'scripts',
       ],
     });
 
@@ -206,12 +209,42 @@ export class TestCasesService {
       testScenarioId,
       responsibleId,
       bugResponsibleId,
+      status,
       ...restDto
     } = updateTestCaseDto;
 
     Object.assign(currentTestCase, restDto);
+    
+    currentTestCase.status = status ?? currentTestCase.status;
+
     currentTestCase.testScenarioId = testScenarioId ?? currentTestCase.testScenarioId;
     currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
+
+    if (scripts && scripts.length > 0) {
+      const oldScripts = currentTestCase.scripts || [];
+      const scriptRepository = this.dataSource.getRepository(Script);
+      const newScriptEntities: Script[] = [];
+
+      let latestVersion = oldScripts.reduce((max, script) => Math.max(max, script.version), 0);
+
+      for (const scriptName of scripts) {
+        latestVersion++;
+
+        const newScript = new Script();
+        newScript.scriptPath = scriptName;
+        newScript.testCase = currentTestCase;
+        newScript.status = currentTestCase.status;
+        newScript.version = latestVersion;
+
+        newScriptEntities.push(newScript);
+      }
+
+      if (newScriptEntities.length > 0) {
+        await scriptRepository.save(newScriptEntities);
+      }
+
+      currentTestCase.scripts = [...oldScripts, ...newScriptEntities];
+    }
 
     const testCaseToUpdate = currentTestCase;
 
@@ -234,9 +267,24 @@ export class TestCasesService {
       testCaseToUpdate.customTestType = null;
     }
 
+    testCaseToUpdate.version = (currentTestCase.version || 1) + 1;
+
     const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
 
     const newStatus = updatedTestCase.status;
+
+    if (oldStatus !== newStatus && updatedTestCase.scripts && updatedTestCase.scripts.length > 0) {
+        const latestScript = updatedTestCase.scripts.reduce((latest, current) => 
+            current.version > latest.version ? current : latest
+        );
+
+        if (latestScript.status !== newStatus) {
+            latestScript.status = newStatus;
+            latestScript.statusSetAt = new Date();
+            await this.dataSource.getRepository(Script).save(latestScript);
+        }
+    }
+
     if (oldStatus !== newStatus && newStatus === TestCaseStatus.REPROVED) {
       const message = `O caso de teste "${updatedTestCase.title}" falhou.`;
       const link = `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`;
@@ -264,21 +312,21 @@ export class TestCasesService {
       }
 
       if (updatedTestCase.bugResponsibleId) {
-        try {
-          await this.bugsService.create({
-            title: `Caso de Teste com Falha: ${updatedTestCase.project.prefix}-${updatedTestCase.projectSequenceId}${updatedTestCase.title}`,
-            description: `Test case "${updatedTestCase.title}" failed execution.\n\nDescription: ${updatedTestCase.description}\n\nSteps: ${updatedTestCase.steps}\n\nExpected Result: ${updatedTestCase.expectedResult}`,
-            priority: updatedTestCase.priority,
-            testCaseId: updatedTestCase.id,
-            assignedDeveloperId: updatedTestCase.bugResponsibleId,
-          });
-        } catch (error) {
-          console.error(
-            `Failed to automatically create bug for test case ${updatedTestCase.id} during update:`,
-            error,
-          );
-        }
-      }
+        try {
+          await this.bugsService.create({
+            title: `Caso de Teste com Falha: ${updatedTestCase.project.prefix}-${updatedTestCase.projectSequenceId}${updatedTestCase.title}`,
+            description: `Test case "${updatedTestCase.title}" failed execution.\n\nDescription: ${updatedTestCase.description}\n\nSteps: ${updatedTestCase.steps}\n\nExpected Result: ${updatedTestCase.expectedResult}`,
+            priority: updatedTestCase.priority,
+            testCaseId: updatedTestCase.id,
+            assignedDeveloperId: updatedTestCase.bugResponsibleId,
+          });
+        } catch (error) {
+          console.error(
+            `Failed to automatically create bug for test case ${updatedTestCase.id} during update:`,
+            error,
+          );
+        }
+      }
     }
 
     const newResponsibleId = updatedTestCase.responsible?.id;
@@ -291,8 +339,6 @@ export class TestCasesService {
         `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`
       );
     }
-    
-
     return this.findOne(id);
   }
 

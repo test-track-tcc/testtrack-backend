@@ -22,8 +22,8 @@ describe('AppController (e2e)', () => {
 
   it('/ (GET) - should return "Hello World :D !"', () => {
     return request(app.getHttpServer())
-      .get('/api/') // <-- CORREÇÃO AQUI: Adicionado o prefixo global da API
+      .get('/api/')
       .expect(200)
-      .expect('Hello World :D !'); // Confirme que esta é a string exata
+      .expect('Hello World :D !'); 
   });
 });
