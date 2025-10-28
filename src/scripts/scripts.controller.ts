@@ -13,8 +13,6 @@ export class ScriptsController {
   @ApiParam({ name: 'orgId', description: 'Organization ID (UUID)', type: 'string' })
   @ApiResponse({ status: 200, description: 'List of scripts returned successfully', type: [Script] })
   async findAllByProject(@Param('projectId') projectId: any): Promise<Script[]> { 
-    console.log('BACKEND: Recebido projectId:', projectId, typeof projectId);
-
     if (typeof projectId !== 'string') {
        throw new BadRequestException('Formato inválido para Project ID');
     }

@@ -92,18 +92,20 @@ export class TestCasesService {
 
       const validScriptPaths = scriptPaths?.filter((path) => typeof path === 'string' && path.length > 0);
       if (validScriptPaths && validScriptPaths.length > 0) {
+        let currentVersion = 1;
         for (const scriptPath of validScriptPaths) {
           const newScript = transactionalEntityManager.create(Script, {
             scriptPath,
-            version: 1,
+            version: currentVersion++,
             testCase: savedTestCase,
+            status: savedTestCase.status,
+            statusSetAt: new Date()
           });
           await transactionalEntityManager.save(newScript);
         }
       }
       return savedTestCase;
     });
-
 
     if (newTestCase.responsible) {
       await this.notificationService.create(
@@ -207,37 +209,41 @@ export class TestCasesService {
       testScenarioId,
       responsibleId,
       bugResponsibleId,
+      status,
       ...restDto
     } = updateTestCaseDto;
 
     Object.assign(currentTestCase, restDto);
+    
+    currentTestCase.status = status;
     currentTestCase.testScenarioId = testScenarioId ?? currentTestCase.testScenarioId;
     currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
 
     if (scripts && scripts.length > 0) {
-      const oldScripts = currentTestCase.scripts || [];
-      const scriptRepository = this.dataSource.getRepository(Script);
-      const newScriptEntities: Script[] = [];
+      const oldScripts = currentTestCase.scripts || [];
+      const scriptRepository = this.dataSource.getRepository(Script);
+      const newScriptEntities: Script[] = [];
 
-      let latestVersion = oldScripts.reduce((max, script) => Math.max(max, script.version), 0);
+      let latestVersion = oldScripts.reduce((max, script) => Math.max(max, script.version), 0);
 
-      for (const scriptName of scripts) {
-        latestVersion++; 
+      for (const scriptName of scripts) {
+        latestVersion++;
 
-        const newScript = new Script();
-        newScript.scriptPath = scriptName;
-        newScript.testCase = currentTestCase;
-        newScript.version = latestVersion;
+        const newScript = new Script();
+        newScript.scriptPath = scriptName;
+        newScript.testCase = currentTestCase;
+        newScript.status = currentTestCase.status;
+        newScript.version = latestVersion;
 
-        newScriptEntities.push(newScript);
-      }
+        newScriptEntities.push(newScript);
+      }
 
-      if (newScriptEntities.length > 0) {
-        await scriptRepository.save(newScriptEntities);
-      }
+      if (newScriptEntities.length > 0) {
+        await scriptRepository.save(newScriptEntities);
+      }
 
-      currentTestCase.scripts = [...oldScripts, ...newScriptEntities];
-    }
+      currentTestCase.scripts = [...oldScripts, ...newScriptEntities];
+    }
 
     const testCaseToUpdate = currentTestCase;
 
@@ -265,6 +271,19 @@ export class TestCasesService {
     const updatedTestCase = await this.testCasesRepository.save(testCaseToUpdate);
 
     const newStatus = updatedTestCase.status;
+
+    if (oldStatus !== newStatus && updatedTestCase.scripts && updatedTestCase.scripts.length > 0) {
+        const latestScript = updatedTestCase.scripts.reduce((latest, current) => 
+            current.version > latest.version ? current : latest
+        );
+
+        if (latestScript.status !== newStatus) {
+            latestScript.status = newStatus;
+            latestScript.statusSetAt = new Date();
+            await this.dataSource.getRepository(Script).save(latestScript);
+        }
+    }
+
     if (oldStatus !== newStatus && newStatus === TestCaseStatus.REPROVED) {
       const message = `O caso de teste "${updatedTestCase.title}" falhou.`;
       const link = `/projects/${currentTestCase.project.id}/test-cases/${updatedTestCase.id}`;
