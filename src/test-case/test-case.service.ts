@@ -215,7 +215,8 @@ export class TestCasesService {
 
     Object.assign(currentTestCase, restDto);
     
-    currentTestCase.status = status;
+    currentTestCase.status = status ?? currentTestCase.status;
+
     currentTestCase.testScenarioId = testScenarioId ?? currentTestCase.testScenarioId;
     currentTestCase.bugResponsibleId = bugResponsibleId ?? null;
 

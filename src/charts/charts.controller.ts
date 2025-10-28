@@ -1,23 +1,19 @@
-// Caminho: src/chart/chart.controller.ts
-// (Novo arquivo)
-
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ChartsService } from './charts.service';
-import { JwtAuthGuard } from '../auth/jtw-auth.guard';
 import { TestStatusMetricsDto } from './dto/test-status-metrics.dto';
 
 @Controller('chart')
 export class ChartsController {
   constructor(private readonly chartService: ChartsService) {}
 
-  @Get('test-status-metrics/:organizationId')
+  @Get('test-status-metrics/:projectId')
   async getTestStatusMetrics(
-    @Param('organizationId') organizationId: string,
-    @Query('period') period: string = 'total', // 'mensal', 'semanal', 'diario', 'total'
-    @Query('testType') testType: string = 'total', // 'total', 'integracao', etc.
+    @Param('projectId') projectId: string,
+    @Query('period') period: string = 'total',
+    @Query('testType') testType: string = 'total', 
   ): Promise<TestStatusMetricsDto> {
     return this.chartService.getTestStatusMetrics(
-      organizationId,
+      projectId,
       period,
       testType,
     );
