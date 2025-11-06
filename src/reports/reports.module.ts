@@ -1,14 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { ReportsController } from './reports.controller';
-import { TestCase } from 'src/test-case/entities/test-case.entity';
-import { Project } from 'src/projects/entities/project.entity';
-import { Permission } from 'src/permission/entities/permission.entity';
+import { TestCase } from '../test-case/entities/test-case.entity';
+import { Project } from '../projects/entities/project.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Report } from './entities/report.entity';
-import { ChartModule } from 'src/chart/chart.module';
+import { ChartModule } from '../chart/chart.module';
 import { ReportsScheduler } from './reports.scheduler';
-import { PdfGeneratorModule } from 'src/pdf-generator/pdf-generator.module';
+import { PdfGeneratorModule } from '../pdf-generator/pdf-generator.module';
 
 @Module({
   imports: [

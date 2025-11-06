@@ -1,16 +1,15 @@
 import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn, OneToOne } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from 'src/users/entities/user.entity';
-import { Organization } from 'src/organization/entities/organization.entity';
+import { User } from '../../users/entities/user.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProjectUser } from './project-user.entity';
 import { projectStatus } from '../../enum/projectStatus';
-import { Permission } from 'src/permission/entities/permission.entity';
+import { Permission } from '../../permission/entities/permission.entity';
 import { IsNotEmpty } from 'class-validator';
-import { TestCase } from 'src/test-case/entities/test-case.entity';
-import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
-import { Report } from 'src/reports/entities/report.entity';
-import { TestScenario } from 'src/test-scenario/entities/test-scenario.entity';
+import { TestCase } from '../../test-case/entities/test-case.entity';
+import { Report } from '../../reports/entities/report.entity';
+import { TestScenario } from '../../test-scenario/entities/test-scenario.entity';
 
 @Entity('projects')
 export class Project {

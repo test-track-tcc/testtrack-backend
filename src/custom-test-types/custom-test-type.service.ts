@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { CustomTestType } from './entities/custom-test-type.entity';
 import { CreateCustomTestTypeDto } from './dto/create-custom-test-type.dto';
 import { UpdateCustomTestTypeDto } from './dto/update-custom-test-type.dto';
-import { Organization } from 'src/organization/entities/organization.entity'; // <-- Import Organization
+import { Organization } from '../organization/entities/organization.entity'; // <-- Import Organization
 
 @Injectable()
 export class CustomTestTypesService {

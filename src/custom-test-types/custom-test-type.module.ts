@@ -4,7 +4,7 @@ import { CustomTestTypesController } from './custom-test-type.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomTestType } from './entities/custom-test-type.entity';
 
-import { Organization } from 'src/organization/entities/organization.entity';
+import { Organization } from '../organization/entities/organization.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CustomTestType, Organization])],

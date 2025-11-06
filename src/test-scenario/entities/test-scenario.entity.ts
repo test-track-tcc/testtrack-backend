@@ -1,8 +1,8 @@
 import { Entity, PrimaryColumn, Column, OneToMany, JoinTable, ManyToOne, JoinColumn } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
-import { Project } from 'src/projects/entities/project.entity';
-import { TestCase } from 'src/test-case/entities/test-case.entity';
+import { Project } from '../../projects/entities/project.entity';
+import { TestCase } from '../../test-case/entities/test-case.entity';
 
 @Entity('test_scenarios')
 export class TestScenario {

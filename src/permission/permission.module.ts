@@ -3,8 +3,8 @@ import { PermissionService } from './permission.service';
 import { PermissionController } from './permission.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from './entities/permission.entity';
-import { UsersModule } from 'src/users/users.module';
-import { ProjectsModule } from 'src/projects/projects.module';
+import { UsersModule } from '../users/users.module';
+import { ProjectsModule } from '../projects/projects.module';
 
 @Module({
   imports: [

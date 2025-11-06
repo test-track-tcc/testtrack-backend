@@ -4,10 +4,8 @@ import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Permission } from './entities/permission.entity';
 import { Repository } from 'typeorm';
-import { UsersService } from 'src/users/users.service';
-import { ProjectsService } from 'src/projects/projects.service';
-import { Logger } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
+import { UsersService } from '../users/users.service';
+import { ProjectsService } from '../projects/projects.service';
 
 @Injectable()
 export class PermissionService {

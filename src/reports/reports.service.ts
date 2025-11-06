@@ -2,14 +2,14 @@ import { Injectable, Logger, BadRequestException, NotFoundException, InternalSer
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { Report } from './entities/report.entity';
-import { TestCase } from 'src/test-case/entities/test-case.entity';
-import { TestCaseStatus } from 'src/config/enums';
-import { Project } from 'src/projects/entities/project.entity';
+import { TestCase } from '../test-case/entities/test-case.entity';
+import { TestCaseStatus } from '../config/enums';
+import { Project } from '../projects/entities/project.entity';
 import PDFDocument = require('pdfkit');
 import * as fs from 'fs';
 import * as path from 'path';
-import { ChartService } from 'src/chart/chart.service';
-import { PdfGeneratorService } from 'src/pdf-generator/pdf-generator.service';
+import { ChartService } from '../chart/chart.service';
+import { PdfGeneratorService } from '../pdf-generator/pdf-generator.service';
 
 @Injectable()
 export class ReportsService {

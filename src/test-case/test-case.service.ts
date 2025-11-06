@@ -4,14 +4,14 @@ import { Repository, DataSource } from 'typeorm';
 import { TestCase } from './entities/test-case.entity';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseDto } from './dto/update-test-case.dto';
-import { Project } from 'src/projects/entities/project.entity';
-import { User } from 'src/users/entities/user.entity';
+import { Project } from '../projects/entities/project.entity';
+import { User } from '../users/entities/user.entity';
 import { Script } from './entities/script.entity';
-import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
-import { NotificationService } from 'src/notification/notification.service';
-import { NotificationType } from 'src/notification/entities/notification.entity';
-import { TestCaseStatus } from 'src/config/enums';
-import { BugsService } from 'src/bugs/bugs.service';
+import { CustomTestType } from '../custom-test-types/entities/custom-test-type.entity';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/entities/notification.entity';
+import { TestCaseStatus } from '../config/enums';
+import { BugsService } from '../bugs/bugs.service';
 
 @Injectable()
 export class TestCasesService {

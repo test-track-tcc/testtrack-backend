@@ -13,8 +13,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Permission } from 'src/permission/entities/permission.entity';
-import { Organization } from 'src/organization/entities/organization.entity';
+import { Permission } from '../../permission/entities/permission.entity';
+import { Organization } from '../../organization/entities/organization.entity';
 
 @Entity({ name: 'access_group' })
 export class AccessGroup {

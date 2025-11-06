@@ -4,12 +4,11 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from './entities/organization.entity';
 import { Repository } from 'typeorm';
-import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/entities/user.entity';
-import { AccessGroup } from 'src/access-group/entities/access-group.entity';
+import { UsersService } from '../users/users.service';
+import { AccessGroup } from '../access-group/entities/access-group.entity';
 import { OrganizationUser, OrganizationRole } from './entities/organization-user.entity';
-import { NotificationService } from 'src/notification/notification.service';
-import { NotificationType } from 'src/notification/entities/notification.entity';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/entities/notification.entity';
 import { MembershipStatus } from './entities/organization-user.entity';
 
 @Injectable()

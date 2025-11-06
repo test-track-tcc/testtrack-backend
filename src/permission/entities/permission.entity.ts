@@ -15,7 +15,7 @@ import { User } from '../../users/entities/user.entity';
 import { AccessGroup } from '../../access-group/entities/access-group.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsUUID } from 'class-validator';
-import { Project } from 'src/projects/entities/project.entity';
+import { Project } from '../../projects/entities/project.entity';
 
 @Entity({ name: 'permission' })
 export class Permission {
