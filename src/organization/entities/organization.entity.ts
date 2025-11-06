@@ -1,11 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable, CreateDateColumn, JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Project } from 'src/projects/entities/project.entity';
+import { Project } from '../../projects/entities/project.entity';
 import { IsUUID } from 'class-validator';
-import { AccessGroup } from 'src/access-group/entities/access-group.entity';
+import { AccessGroup } from '../../access-group/entities/access-group.entity';
 import { OrganizationUser } from './organization-user.entity';
-import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
+import { CustomTestType } from '../../custom-test-types/entities/custom-test-type.entity';
 
 @Entity()
 export class Organization {

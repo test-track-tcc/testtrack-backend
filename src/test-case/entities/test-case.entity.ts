@@ -3,11 +3,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus, FunctionalTestFramework } from '../../config/enums';
 import { DeviceType } from '../../enum/deviceType';
-import { Project } from 'src/projects/entities/project.entity';
-import { User } from 'src/users/entities/user.entity';
+import { Project } from '../../projects/entities/project.entity';
+import { User } from '../../users/entities/user.entity';
 import { Script } from './script.entity';
-import { CustomTestType } from 'src/custom-test-types/entities/custom-test-type.entity';
-import { TestScenario } from 'src/test-scenario/entities/test-scenario.entity';
+import { CustomTestType } from '../../custom-test-types/entities/custom-test-type.entity';
+import { TestScenario } from '../../test-scenario/entities/test-scenario.entity';
 import { Comment } from '../../comment/entities/comment.entity';
 
 @Entity('test_cases')

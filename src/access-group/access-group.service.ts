@@ -6,7 +6,7 @@ import { Organization } from '../organization/entities/organization.entity';
 import { Permission } from '../permission/entities/permission.entity';
 import { CreateAccessGroupDto } from './dto/create-access-group.dto';
 import { UpdateAccessGroupDto } from './dto/update-access-group.dto';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class AccessGroupService {

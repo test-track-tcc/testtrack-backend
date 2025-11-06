@@ -5,7 +5,7 @@ import { TestScenario } from './entities/test-scenario.entity';
 import { CreateTestScenarioDto } from './dto/create-test-scenario.dto';
 import { UpdateTestScenarioDto } from './dto/update-test-scenario.dto';
 import { TestCase } from '../test-case/entities/test-case.entity';
-import { Project } from 'src/projects/entities/project.entity';
+import { Project } from '../projects/entities/project.entity';
 
 @Injectable()
 export class TestScenarioService {

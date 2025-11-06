@@ -1,6 +1,5 @@
-import { Organization } from 'src/organization/entities/organization.entity';
-
-import { TestCase } from 'src/test-case/entities/test-case.entity';
+import { Organization } from '../../organization/entities/organization.entity';
+import { TestCase } from '../../test-case/entities/test-case.entity';
 import {
   Column,
   CreateDateColumn,

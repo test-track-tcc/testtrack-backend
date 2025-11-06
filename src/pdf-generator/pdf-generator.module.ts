@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PdfGeneratorService } from './pdf-generator.service';
-import { ChartModule } from 'src/chart/chart.module';
+import { ChartModule } from '../chart/chart.module';
 
 @Module({
   imports: [ChartModule], // Importa o ChartModule para ter acesso ao ChartService

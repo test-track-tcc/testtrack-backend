@@ -9,13 +9,13 @@ import { Project } from './entities/project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { User } from '../users/entities/user.entity';
-import { Organization } from 'src/organization/entities/organization.entity';
+import { Organization } from '../organization/entities/organization.entity';
 import { ProjectUser, ProjectRole } from './entities/project-user.entity';
 import { AddUserToProjectDto } from './dto/add-users-to-project.dto';
-import { Permission } from 'src/permission/entities/permission.entity';
-import { Report } from 'src/reports/entities/report.entity';
-import { NotificationService } from 'src/notification/notification.service';
-import { NotificationType } from 'src/notification/entities/notification.entity';
+import { Permission } from '../permission/entities/permission.entity';
+import { Report } from '../reports/entities/report.entity';
+import { NotificationService } from '../notification/notification.service';
+import { NotificationType } from '../notification/entities/notification.entity';
 
 function generatePrefix(name: string): string {
   return name

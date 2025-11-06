@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
-import { TestCaseStatus } from 'src/config/enums';
-import { Report } from 'src/reports/entities/report.entity';
-import { TestCase } from 'src/test-case/entities/test-case.entity';
+import { TestCaseStatus } from '../config/enums';
 
 @Injectable()
 export class ChartService {

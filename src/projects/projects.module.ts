@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectsService } from './projects.service';
 import { ProjectsController } from './projects.controller';
 import { Project } from './entities/project.entity';
-import { Organization } from 'src/organization/entities/organization.entity';
+import { Organization } from '../organization/entities/organization.entity';
 import { User } from '../users/entities/user.entity';
 import { ProjectUser } from './entities/project-user.entity';
-import { Permission } from 'src/permission/entities/permission.entity';
-import { Report } from 'src/reports/entities/report.entity';
-import { NotificationModule } from 'src/notification/notification.module';
+import { Permission } from '../permission/entities/permission.entity';
+import { Report } from '../reports/entities/report.entity';
+import { NotificationModule } from '../notification/notification.module';
 
 
 @Module({

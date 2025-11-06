@@ -1,10 +1,8 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
-import { ChartService } from 'src/chart/chart.service';
-import PDFDocument = require('pdfkit'); // Correção de importação para compatibilidade com TypeScript
+import { ChartService } from '../chart/chart.service';
+import PDFDocument = require('pdfkit');
 import * as fs from 'fs';
-import { TestCaseStatus } from 'src/config/enums';
 
-// Criamos uma interface para o contrato de dados, tornando o código mais seguro e legível
 export interface ReportData {
   statuses: Map<string, number>;
 }

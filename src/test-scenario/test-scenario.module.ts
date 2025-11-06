@@ -1,4 +1,3 @@
-// src/test-scenario/test-scenario.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TestScenario } from './entities/test-scenario.entity';

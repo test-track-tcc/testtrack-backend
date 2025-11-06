@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { TestCase } from './test-case.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { TestCaseStatus } from 'src/config/enums';
+import { TestCaseStatus } from '../../config/enums';
 
 @Entity('scripts')
 export class Script {
