@@ -148,6 +148,10 @@ export class TestCase {
   @JoinColumn({ name: 'bugResponsibleId' })
   bugResponsible: User;
 
+  @ApiProperty({ description: 'Versão do caso de teste, incrementada a cada atualização', example: 1 })
+  @Column({ type: 'int', default: 1 })
+  version: number;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

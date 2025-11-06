@@ -90,7 +90,17 @@ export class TestCasesController {
   @Put(':id')
   @ApiOperation({ summary: 'Update an existing test case' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }]))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }], {
+    storage: diskStorage({
+      destination: './uploads/scripts',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = extname(file.originalname);
+        const filename = `${file.originalname.split('.')[0]}-${uniqueSuffix}${ext}`;
+        callback(null, filename);
+      },
+    }),
+  }))
   async update(
     @Param('id') id: string,
     @UploadedFiles() files: { scripts?: Express.Multer.File[] },
@@ -98,17 +108,18 @@ export class TestCasesController {
   ): Promise<TestCase> {
     const fieldsToParse = ['attachments'];
     for (const field of fieldsToParse) {
-        if (updateTestCaseDto[field] && typeof updateTestCaseDto[field] === 'string') {
-            try {
-                updateTestCaseDto[field] = JSON.parse(updateTestCaseDto[field] as string);
-            } catch (e) {
-                throw new BadRequestException(`Field '${field}' has invalid JSON.`);
-            }
+      if (updateTestCaseDto[field] && typeof updateTestCaseDto[field] === 'string') {
+        try {
+          updateTestCaseDto[field] = JSON.parse(updateTestCaseDto[field] as string);
+        } catch (e) {
+          throw new BadRequestException(`Field '${field}' has invalid JSON.`);
         }
+      }
     }
-    
-    if (files.scripts) {
-        // Lógica para lidar com atualização de scripts, se necessário
+
+    if (files && files.scripts && files.scripts.length > 0) {
+      const scriptPaths = files.scripts.map((file) => file.path);
+      updateTestCaseDto.scripts = scriptPaths;
     }
 
     return this.testCasesService.update(id, updateTestCaseDto);

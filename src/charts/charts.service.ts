@@ -1,12 +1,8 @@
-// Caminho: src/chart/chart.service.ts
-// (Corrigido)
-
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TestCase } from '../test-case/entities/test-case.entity';
 import { Bug } from '../bugs/entities/bug.entity';
-// Importação CORRIGIDA: Trocado TestStatus por TestCaseStatus
 import { TestCaseStatus } from '../config/enums'; 
 import { TestStatusMetricsDto } from './dto/test-status-metrics.dto';
 
@@ -20,19 +16,17 @@ export class ChartsService {
   ) {}
 
   /**
-   * Calcula as métricas de status dos casos de teste para uma organização,
+   * Calcula as métricas de status dos casos de teste para UM PROJETO,
    * com filtros opcionais de período e tipo de teste.
    */
   async getTestStatusMetrics(
-    organizationId: string,
+    projectId: string,
     period: string,
     testType: string,
   ): Promise<TestStatusMetricsDto> {
     const query = this.testCaseRepository
       .createQueryBuilder('testCase')
-      .leftJoin('testCase.testScenario', 'testScenario')
-      .leftJoin('testScenario.project', 'project')
-      .where('project.organizationId = :organizationId', { organizationId });
+      .where('testCase.projectId = :projectId', { projectId });
 
     if (period && period !== 'total') {
       const now = new Date();
@@ -41,7 +35,7 @@ export class ChartsService {
       if (period === 'mensal') {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
       } else if (period === 'semanal') {
-        startDate = new Date(now.setDate(now.getDate() - (now.getDay() || 7))); // Ajuste para semana começar Domingo ou Segunda
+        startDate = new Date(now.setDate(now.getDate() - (now.getDay() || 7)));
       } else if (period === 'diario') {
         startDate = new Date(now.setHours(0, 0, 0, 0));
       }
@@ -51,22 +45,16 @@ export class ChartsService {
       }
     }
 
-    // 2. Filtro por Tipo de Teste (Ex: 'integracao', 'unidade')
-    // Assumindo que 'testCase.testType' armazena essa string
-    // Ajuste: O enum TestType usa 'INTEGRACAO', 'MANUAL' etc.
     if (testType && testType !== 'total') {
-        // Converte o 'integracao' do frontend para 'INTEGRACAO' do backend
       query.andWhere('testCase.testType = :testType', { testType: testType.toUpperCase() });
     }
 
-    // 3. Agrupar e Contar
     const rawCounts = await query
       .select('testCase.status', 'status')
       .addSelect('COUNT(testCase.id)', 'count')
       .groupBy('testCase.status')
       .getRawMany();
 
-    // 4. Formatar a resposta
     const metrics: TestStatusMetricsDto = {
       success: 0,
       failure: 0,
@@ -75,36 +63,30 @@ export class ChartsService {
       total: 0,
     };
 
-    // Mapeamento CORRIGIDO do switch
     rawCounts.forEach((row) => {
       const count = parseInt(row.count, 10);
-      let countedInTotal = true; // Flag para não somar 'CANCELADO' no total
+      let countedInTotal = true; 
 
       switch (row.status) {
-        // Sucesso
         case TestCaseStatus.APPROVED:
         case TestCaseStatus.FINISHED:
           metrics.success += count;
           break;
         
-        // Falha
         case TestCaseStatus.REPROVED:
         case TestCaseStatus.BLOCKED:
           metrics.failure += count;
           break;
 
-        // Em Andamento
         case TestCaseStatus.IN_PROGRESS:
           metrics.inProgress += count;
           break;
 
-        // Não Iniciado
         case TestCaseStatus.NOT_STARTED:
         case TestCaseStatus.PENDING:
           metrics.notStarted += count;
           break;
         
-        // Ignorados
         case TestCaseStatus.CANCELED:
           countedInTotal = false;
           break;
