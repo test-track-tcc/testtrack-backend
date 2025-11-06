@@ -1,6 +1,6 @@
 import { IsString, IsUUID, IsNotEmpty, IsOptional, IsDateString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { projectStatus } from 'src/enum/projectStatus';
+import { projectStatus } from '../../enum/projectStatus';
 
 export class CreateProjectDto {
   @ApiProperty({ description: 'Nome do projeto' })

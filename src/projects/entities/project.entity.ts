@@ -4,7 +4,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Organization } from 'src/organization/entities/organization.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProjectUser } from './project-user.entity';
-import { projectStatus } from 'src/enum/projectStatus';
+import { projectStatus } from '../../enum/projectStatus';
 import { Permission } from 'src/permission/entities/permission.entity';
 import { IsNotEmpty } from 'class-validator';
 import { TestCase } from 'src/test-case/entities/test-case.entity';
