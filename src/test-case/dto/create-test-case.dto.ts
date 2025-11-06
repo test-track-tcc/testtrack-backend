@@ -15,7 +15,7 @@ import {
   TestCaseStatus,
   FunctionalTestFramework,
 } from '../../config/enums';
-import { DeviceType } from 'src/enum/deviceType';
+import { DeviceType } from '../../enum/deviceType';
 
 export class CreateTestCaseDto {
   @ApiProperty({

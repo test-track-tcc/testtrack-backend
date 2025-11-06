@@ -2,7 +2,7 @@ import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, Many
 import { v4 as uuidv4 } from 'uuid';
 import { ApiProperty } from '@nestjs/swagger';
 import { TestType, Priority, TestCaseStatus, FunctionalTestFramework } from '../../config/enums';
-import { DeviceType } from 'src/enum/deviceType';
+import { DeviceType } from '../../enum/deviceType';
 import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Script } from './script.entity';
