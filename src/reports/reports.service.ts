@@ -6,6 +6,7 @@ import { TestCase } from '../test-case/entities/test-case.entity';
 import { TestCaseStatus } from '../config/enums';
 import { Project } from '../projects/entities/project.entity';
 import PDFDocument = require('pdfkit');
+import { put } from '@vercel/blob';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ChartService } from '../chart/chart.service';
@@ -121,20 +122,29 @@ export class ReportsService {
     // Passa o nome do projeto para o gerador de PDF
     try {
       await this.pdfGeneratorService.tryGenerateTestReportPdf(filePath, reportData, startDate, endDate, project.name);
+      const fileBuffer = await fs.promises.readFile(filePath);
+
+      const { url } = await put(fileName, fileBuffer, {
+        access: 'public',
+        addRandomSuffix: true,
+        token: process.env.TESTTRACK_READ_WRITE_TOKEN,
+      });
+
+      this.logger.log(`Relatório enviado para o Blob com sucesso: ${url}`);
+
+      const newReport = this.reportRepository.create({
+        fileName,
+        filePath,
+        project: project,
+        blobUrl: url,
+      });
+      
+      await this.reportRepository.save(newReport);
+      this.logger.log(`Relatório para "${project.name}" gerado e salvo com sucesso.`);
     } catch (error) {
       this.logger.error(`Falha ao gerar o PDF para o projeto "${project.name}". Erro: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Falha ao gerar o arquivo PDF do relatório.`);
     }
-
-    // Salva o registro do relatório no banco de dados
-    const newReport = this.reportRepository.create({
-      fileName,
-      filePath,
-      project: project,
-    });
-    
-    await this.reportRepository.save(newReport);
-    this.logger.log(`Relatório para "${project.name}" gerado com sucesso.`);
   }
   
     private async findProjects(): Promise<Project[]> {

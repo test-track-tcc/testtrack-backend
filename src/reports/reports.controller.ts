@@ -23,15 +23,34 @@ export class ReportsController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<StreamableFile> {
     const report = await this.reportsService.findOne(id);
+
+    if (report.blobUrl) {
+      const response = await fetch(report.blobUrl);
+
+      if (!response.ok) {
+        throw new Error(`Erro ao baixar arquivo do Blob: ${response.statusText}`);
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${report.fileName}"`,
+      });
+
+      return new StreamableFile(buffer);
+    }
+
     const file = createReadStream(report.filePath);
-    
+
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${report.fileName}"`,
     });
-    
+
     return new StreamableFile(file);
   }
+
 
   @Get('trigger-all-projects-manual-report')
   @ApiOperation({ summary: 'Dispara manualmente a geração do relatório semanal' })

@@ -7,6 +7,7 @@ import { UpdateTestCaseDto } from './dto/update-test-case.dto';
 import { TestCase } from './entities/test-case.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { extname } from 'path';
+import { uploadScriptToBlob } from '../utils/script.upload';
 
 @ApiTags('test-cases')
 @Controller('test-cases')
@@ -43,10 +44,16 @@ export class TestCasesController {
       }
     }
 
-    if (files && files.scripts) {
-        const scriptPaths = files.scripts.map((file) => file.path);
-        createTestCaseDto.scripts = scriptPaths;
+    const scriptUrls: string[] = [];
+
+    if (files?.scripts && files.scripts.length > 0) {
+      for (const file of files.scripts) {
+        const url = await uploadScriptToBlob(file);
+        scriptUrls.push(url);
+      }
     }
+
+    createTestCaseDto.scripts = scriptUrls;
     
     return this.testCasesService.create(createTestCaseDto);
   }
@@ -117,9 +124,27 @@ export class TestCasesController {
       }
     }
 
-    if (files && files.scripts && files.scripts.length > 0) {
-      const scriptPaths = files.scripts.map((file) => file.path);
-      updateTestCaseDto.scripts = scriptPaths;
+    const updatedScriptUrls: string[] = [];
+
+    if (files?.scripts && files.scripts.length > 0) {
+      for (const file of files.scripts) {
+        const url = await uploadScriptToBlob(file);
+        updatedScriptUrls.push(url);
+      }
+    }
+
+    const existing = await this.testCasesService.findOne(id);
+    if (!existing) {
+      throw new BadRequestException('Test case não encontrado.');
+    }
+
+    const existingScriptPaths =
+      existing.scripts?.map((script: any) =>
+        typeof script === 'string' ? script : script.scriptPath,
+      ) || [];
+
+    if (updatedScriptUrls.length > 0) {
+      (updateTestCaseDto as any).scripts = updatedScriptUrls;
     }
 
     return this.testCasesService.update(id, updateTestCaseDto);
