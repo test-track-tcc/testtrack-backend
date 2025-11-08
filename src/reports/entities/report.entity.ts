@@ -25,4 +25,7 @@ export class Report {
   @ManyToOne(() => Project, (project) => project.reports, { eager: true })
   @JoinColumn({ name: 'projectId' })
   project: Project;
+
+  @Column({ nullable: true })
+  blobUrl?: string;
 }
