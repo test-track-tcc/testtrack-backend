@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname, join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -24,7 +24,6 @@ import { NotificationModule } from './notification/notification.module';
 import { BugsModule } from './bugs/bugs.module';
 import { ChartsModule } from './charts/charts.module';
 import { ScriptsModule } from './scripts/scripts.module';
-import multer from 'multer';
 
 @Module({
   imports: [
@@ -51,7 +50,7 @@ import multer from 'multer';
       serveRoot: '/api/uploads',
     }),
     MulterModule.register({
-      storage: multer.memoryStorage(),
+      storage: memoryStorage(),
     }),
     UsersModule,
     TestCasesModule,

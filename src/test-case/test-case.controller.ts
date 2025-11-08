@@ -1,12 +1,11 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, NotFoundException, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
-import multer from 'multer';
+import { memoryStorage } from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { TestCasesService } from './test-case.service';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
 import { UpdateTestCaseDto } from './dto/update-test-case.dto';
 import { TestCase } from './entities/test-case.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes } from '@nestjs/swagger';
-import { extname } from 'path';
 import { uploadScriptToBlob } from '../utils/script.upload';
 
 @ApiTags('test-cases')
@@ -18,7 +17,7 @@ export class TestCasesController {
   @ApiOperation({ summary: 'Create a new test case' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }], {
-    storage: multer.memoryStorage(),
+    storage: memoryStorage(),
   }))
   async create(
     @UploadedFiles() files: { scripts?: Express.Multer.File[] },
@@ -90,7 +89,7 @@ export class TestCasesController {
   @ApiOperation({ summary: 'Update an existing test case' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }], {
-    storage: multer.memoryStorage(),
+    storage: memoryStorage(),
   }))
   async update(
     @Param('id') id: string,
