@@ -5,6 +5,7 @@ import { Comment } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { TestCase } from '../test-case/entities/test-case.entity';
 import { User } from '../users/entities/user.entity';
+import { put } from '@vercel/blob';
 
 @Injectable()
 export class CommentService {
@@ -17,16 +18,28 @@ export class CommentService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(testCaseId: string, createCommentDto: CreateCommentDto, files: Express.Multer.File[]): Promise<Comment> {
+  async create(
+    testCaseId: string,
+    createCommentDto: CreateCommentDto,
+    files: Express.Multer.File[],
+  ): Promise<Comment> {
     const { text, authorId } = createCommentDto;
-    
+
     const testCase = await this.testCaseRepository.findOneBy({ id: testCaseId });
     if (!testCase) throw new NotFoundException(`Caso de teste com ID "${testCaseId}" não encontrado.`);
 
     const author = await this.userRepository.findOneBy({ id: authorId });
     if (!author) throw new NotFoundException(`Usuário com ID "${authorId}" não encontrado.`);
 
-    const attachments = files.map(file => file.path);
+    const attachments: string[] = [];
+    for (const file of files) {
+      const blobName = `comments/${Date.now()}-${file.originalname}`;
+      const { url } = await put(blobName, file.buffer, {
+        access: 'public',
+        token: process.env.TESTTRACK_READ_WRITE_TOKEN,
+      });
+      attachments.push(url);
+    }
 
     const newComment = this.commentRepository.create({
       text,
