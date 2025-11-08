@@ -24,6 +24,7 @@ import { NotificationModule } from './notification/notification.module';
 import { BugsModule } from './bugs/bugs.module';
 import { ChartsModule } from './charts/charts.module';
 import { ScriptsModule } from './scripts/scripts.module';
+import multer from 'multer';
 
 @Module({
   imports: [
@@ -50,13 +51,7 @@ import { ScriptsModule } from './scripts/scripts.module';
       serveRoot: '/api/uploads',
     }),
     MulterModule.register({
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const randomName = Array(32).fill(null).map(() => Math.round(Math.random() * 16).toString(16)).join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
+      storage: multer.memoryStorage(),
     }),
     UsersModule,
     TestCasesModule,

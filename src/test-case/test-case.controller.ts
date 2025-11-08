@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, NotFoundException, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
-import { diskStorage } from 'multer';
+import multer from 'multer';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { TestCasesService } from './test-case.service';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
@@ -18,15 +18,7 @@ export class TestCasesController {
   @ApiOperation({ summary: 'Create a new test case' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }], {
-    storage: diskStorage({
-      destination: './uploads/scripts',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = extname(file.originalname);
-        const filename = `${file.originalname.split('.')[0]}-${uniqueSuffix}${ext}`;
-        callback(null, filename);
-      },
-    }),
+    storage: multer.memoryStorage(),
   }))
   async create(
     @UploadedFiles() files: { scripts?: Express.Multer.File[] },
@@ -98,15 +90,7 @@ export class TestCasesController {
   @ApiOperation({ summary: 'Update an existing test case' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileFieldsInterceptor([{ name: 'scripts', maxCount: 10 }], {
-    storage: diskStorage({
-      destination: './uploads/scripts',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = extname(file.originalname);
-        const filename = `${file.originalname.split('.')[0]}-${uniqueSuffix}${ext}`;
-        callback(null, filename);
-      },
-    }),
+    storage: multer.memoryStorage(),
   }))
   async update(
     @Param('id') id: string,
