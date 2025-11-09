@@ -7,13 +7,15 @@ import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const allowedOrigins = [
+    'http://localhost:5173', 'http://127.0.0.1:5173', 'https://testtrack-frontend.vercel.app'
+  ];
   app.enableCors({
-  origin: (origin, callback) => {
-    const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://testtrack-frontend.vercel.app'];
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, origin);
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error('Origem não permitida pelo CORS'));
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
