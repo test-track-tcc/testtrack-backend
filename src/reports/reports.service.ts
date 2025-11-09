@@ -103,38 +103,58 @@ export class ReportsService {
   /**
    * Gera um relatório específico para um único projeto em um determinado período.
    */
-  private async generateReportForProject(project: Project, startDate: Date, endDate: Date): Promise<void> {
+  private async generateReportForProject(
+    project: Project,
+    startDate: Date,
+    endDate: Date
+  ): Promise<void> {
     this.logger.log(`Gerando relatório para o projeto: "${project.name}" (ID: ${project.id})`);
-    
-    // Cria um Map com a contagem de status dos casos de teste
+
     const statusesCountedMap = await this.countTestCasesByStatus(project.id, startDate, endDate);
     const statusesCountedString = JSON.stringify(Array.from(statusesCountedMap.entries()));
-
     this.logger.log(`Status coletados para o projeto "${project.name}": ${statusesCountedString}`);
+
     const reportData = { statuses: statusesCountedMap };
 
-    // Gera um nome de arquivo único por projeto
     const fileName = `Relatorio-${project.name.replace(/\s/g, '_')}-${endDate.toISOString().split('T')[0]}.pdf`;
     const filePath = await this.createFilePath(fileName);
     this.logger.log(`Caminho do arquivo do relatório: ${filePath}`);
 
-    // Passa o nome do projeto para o gerador de PDF
     try {
-      await this.pdfGeneratorService.tryGenerateTestReportPdf(filePath, reportData, startDate, endDate, project.name);
-      const fileBuffer = await fs.promises.readFile(filePath);
+      const chartBuffer = await this.chartService.createDonutChart(statusesCountedMap);
 
+      const pdfDoc = new PDFDocument({ size: 'A4', margin: 50 });
+      const stream = fs.createWriteStream(filePath);
+      pdfDoc.pipe(stream);
+
+      pdfDoc.fontSize(25).text('Relatório de Testes', { align: 'center' });
+      pdfDoc.moveDown(0.5);
+      pdfDoc.fontSize(20).text(`Projeto: ${project.name}`, { align: 'center' });
+      pdfDoc.moveDown();
+      pdfDoc.fontSize(16).text(`Período: ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}`);
+      pdfDoc.moveDown(2);
+
+      pdfDoc.fontSize(18).text('Resumo dos Resultados:', { underline: true });
+      pdfDoc.moveDown();
+
+      // Inserir gráfico
+      const chartX = pdfDoc.x;
+      const chartY = pdfDoc.y;
+      pdfDoc.image(chartBuffer, chartX, chartY, { fit: [250, 250], align: 'center', valign: 'center' });
+
+      pdfDoc.end();
+
+      await new Promise<void>((resolve, reject) => {
+        stream.on('finish', resolve);
+        stream.on('error', reject);
+      });
+
+      const fileBuffer = await fs.promises.readFile(filePath);
       const { url } = await put(fileName, fileBuffer, {
         access: 'public',
         addRandomSuffix: true,
         token: process.env.TESTTRACK_READ_WRITE_TOKEN,
       });
-
-      try {
-        await fs.promises.unlink(filePath);
-        this.logger.log(`Arquivo temporário removido: ${filePath}`);
-      } catch (err) {
-        this.logger.warn(`Não foi possível remover o arquivo temporário: ${filePath}`, err.stack);
-      }
 
       this.logger.log(`Relatório enviado para o Blob com sucesso: ${url}`);
 
@@ -144,9 +164,17 @@ export class ReportsService {
         project: project,
         blobUrl: url,
       });
-      
+
       await this.reportRepository.save(newReport);
       this.logger.log(`Relatório para "${project.name}" gerado e salvo com sucesso.`);
+
+      try {
+        await fs.promises.unlink(filePath);
+        this.logger.log(`Arquivo temporário removido: ${filePath}`);
+      } catch (err) {
+        this.logger.warn(`Não foi possível remover o arquivo temporário: ${filePath}`, err.stack);
+      }
+
     } catch (error) {
       this.logger.error(`Falha ao gerar o PDF para o projeto "${project.name}". Erro: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Falha ao gerar o arquivo PDF do relatório.`);
