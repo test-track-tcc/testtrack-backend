@@ -1,19 +1,20 @@
 import { put } from '@vercel/blob';
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class BlobUploadService {
   async uploadFile(file: Express.Multer.File, folder = 'uploads'): Promise<string> {
-    const blobName = `${folder}/${Date.now()}-${file.originalname}`;
-    const buffer = fs.readFileSync(file.path);
+    if (!file || !file.buffer) {
+      throw new Error('Arquivo inválido ou buffer ausente');
+    }
 
-    const { url } = await put(blobName, buffer, {
+    const blobName = `${folder}/${Date.now()}-${randomUUID()}-${file.originalname}`;
+
+    const { url } = await put(blobName, file.buffer, {
       access: 'public',
       token: process.env.TESTTRACK_READ_WRITE_TOKEN,
     });
-
-    fs.unlinkSync(file.path);
 
     return url;
   }
