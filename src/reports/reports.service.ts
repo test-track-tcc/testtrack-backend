@@ -93,12 +93,11 @@ export class ReportsService {
   }
 
   private async createFilePath(fileName: string): Promise<string> {
-    const testtrackdir = process.cwd();
-    this.logger.log(`Diretório atual do processo: ${testtrackdir}`);
-    const consecutiveDirs = [testtrackdir, 'private', 'reports'];
-    const reportsDir = path.join(...consecutiveDirs);
+    const reportsDir = path.join('/tmp', 'reports');
     await fs.promises.mkdir(reportsDir, { recursive: true });
-    return path.join(reportsDir, fileName);
+    const fullPath = path.join(reportsDir, fileName);
+    this.logger.log(`Caminho do arquivo temporário: ${fullPath}`);
+    return fullPath;
   }
 
   /**
@@ -129,6 +128,13 @@ export class ReportsService {
         addRandomSuffix: true,
         token: process.env.TESTTRACK_READ_WRITE_TOKEN,
       });
+
+      try {
+        await fs.promises.unlink(filePath);
+        this.logger.log(`Arquivo temporário removido: ${filePath}`);
+      } catch (err) {
+        this.logger.warn(`Não foi possível remover o arquivo temporário: ${filePath}`, err.stack);
+      }
 
       this.logger.log(`Relatório enviado para o Blob com sucesso: ${url}`);
 
