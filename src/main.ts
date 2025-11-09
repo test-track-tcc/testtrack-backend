@@ -9,7 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors({
   origin: (origin, callback) => {
-    const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+    const allowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://testtrack-frontend.vercel.app'];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, origin);
       } else {
